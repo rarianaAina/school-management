@@ -23,6 +23,7 @@ import {
 import { SchoolSwitcher } from '@/components/shared/SchoolSwitcher'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useSchool } from '@/features/schools/SchoolProvider'
+import { NotificationBell } from '@/features/communication/components/NotificationBell'
 import { NAVIGATION } from '@/app/navigation'
 import { initials } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -133,6 +134,7 @@ export function AppShell() {
 
           <div className="ml-auto flex items-center gap-2">
             <YearSelector />
+            <NotificationBell />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

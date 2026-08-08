@@ -535,3 +535,81 @@ begin
     (select count(*) from public.term_results);
 end
 $$;
+
+-- =============================================================================
+-- Modules 6 a 8 — finances, presences, communication
+-- =============================================================================
+do $$
+declare
+  v_lycee uuid; v_year uuid; v_level uuid; v_cat_sco uuid; v_cat_ins uuid;
+  v_stu record; v_inv uuid; v_lesson record; v_a uuid; v_n integer;
+begin
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', '10000000-0000-4000-a000-000000000001', 'role', 'authenticated')::text, true);
+
+  select id into v_lycee from public.schools where slug = 'lycee-victor-hugo';
+  select id into v_year from public.academic_years where school_id = v_lycee and is_current;
+  select id into v_level from public.levels where school_id = v_lycee and code = '2NDE';
+
+  -- Grille tarifaire : tarif general + tarif specifique a la Seconde
+  insert into public.fee_categories (school_id, name, code) values (v_lycee, 'Scolarite', 'SCO')
+  returning id into v_cat_sco;
+  insert into public.fee_categories (school_id, name, code) values (v_lycee, 'Inscription', 'INS')
+  returning id into v_cat_ins;
+
+  insert into public.fee_structures (school_id, academic_year_id, fee_category_id, amount, currency)
+  values (v_lycee, v_year, v_cat_sco, 800000, 'MGA'),
+         (v_lycee, v_year, v_cat_ins, 150000, 'MGA');
+  insert into public.fee_structures (school_id, academic_year_id, fee_category_id, level_id, amount, currency)
+  values (v_lycee, v_year, v_cat_sco, v_level, 950000, 'MGA');
+
+  -- Facturation de la Seconde A, avec des situations de reglement variees
+  for v_stu in
+    select e.student_id, row_number() over (order by e.student_id) as n
+    from public.enrollments e join public.classes c on c.id = e.class_id
+    where c.code = '2A' and e.status = 'active'
+  loop
+    perform public.assign_fees_to_student(v_stu.student_id, v_year);
+    v_inv := public.issue_invoice(v_stu.student_id, v_year, current_date + 10);
+
+    if v_stu.n = 1 then
+      perform public.record_payment(v_inv, 1100000, 'bank_transfer', 'VIR-001');   -- solde
+    elsif v_stu.n = 2 then
+      perform public.record_payment(v_inv, 400000, 'mobile_money', 'MVOLA-114');   -- partiel
+    elsif v_stu.n = 3 then
+      perform public.record_payment(v_inv, 150000, 'cash');                        -- acompte
+    end if;                                                                        -- le 4e : impaye
+  end loop;
+
+  -- Presences : appel fait sur les seances de la premiere semaine
+  for v_lesson in
+    select l.id from public.lessons l
+    join public.classes c on c.id = l.class_id
+    where c.code = '2A' and l.date between '2025-09-01' and '2025-09-12'
+    order by l.date limit 6
+  loop
+    perform public.open_attendance_sheet(v_lesson.id);
+  end loop;
+
+  -- Quelques absences et retards, pour alimenter les statistiques
+  update public.attendance_records a set status = 'absent'
+   where a.id in (select id from public.attendance_records order by id limit 3);
+  update public.attendance_records a set status = 'late', minutes_late = 10
+   where a.id in (select id from public.attendance_records offset 5 limit 2);
+
+  -- Annonce diffusee
+  insert into public.announcements (school_id, title, body, author_id, audience, target_roles, is_pinned)
+  values (v_lycee, 'Reunion parents-professeurs',
+          'La reunion se tiendra le vendredi 17 octobre a 17h en salle polyvalente. Les bulletins du 1er trimestre y seront remis.',
+          '10000000-0000-4000-a000-000000000001', 'role',
+          array['parent','student']::public.user_role[], true)
+  returning id into v_a;
+  perform public.broadcast_announcement(v_a);
+
+  select count(*) into v_n from public.invoices where school_id = v_lycee;
+  raise notice 'Seed modules 6-8 : % factures, % presences, % notifications.',
+    v_n,
+    (select count(*) from public.attendance_records where school_id = v_lycee),
+    (select count(*) from public.notifications where school_id = v_lycee);
+end
+$$;

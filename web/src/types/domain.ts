@@ -357,3 +357,52 @@ export const FEE_STATUS_LABELS: Record<FeeStatus, string> = {
   waived: 'Exonéré',
   overdue: 'En retard',
 }
+
+// -----------------------------------------------------------------------------
+// Modules 7 et 8 — présences, communication
+// -----------------------------------------------------------------------------
+export type AttendanceStatus = Enums<'attendance_status'>
+export type JustificationStatus = Enums<'justification_status'>
+export type AnnouncementAudience = Enums<'announcement_audience'>
+export type NotificationType = Enums<'notification_type'>
+
+export type AttendanceRecord = Tables<'attendance_records'>
+export type AbsenceJustification = Tables<'absence_justifications'>
+export type AttendanceStat = Tables<'attendance_stats'>
+export type LessonAttendance = Tables<'lesson_attendance'>
+export type Announcement = Tables<'announcements'>
+export type AppNotification = Tables<'notifications'>
+
+export const ATTENDANCE_STATUS_LABELS: Record<AttendanceStatus, string> = {
+  present: 'Présent',
+  absent: 'Absent',
+  late: 'Retard',
+  excused: 'Absence justifiée',
+  left_early: 'Parti avant la fin',
+}
+
+export const JUSTIFICATION_STATUS_LABELS: Record<JustificationStatus, string> = {
+  pending: 'En attente',
+  approved: 'Approuvé',
+  rejected: 'Refusé',
+}
+
+export const AUDIENCE_LABELS: Record<AnnouncementAudience, string> = {
+  all: "Tout l'établissement",
+  role: 'Par rôle',
+  level: 'Par niveau',
+  class: 'Par classe',
+  student: 'Élèves ciblés',
+}
+
+export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
+  announcement: 'Annonce',
+  grade_published: 'Notes publiées',
+  report_card: 'Bulletin',
+  invoice: 'Facture',
+  payment_reminder: 'Relance de paiement',
+  absence: 'Absence',
+  exam_convocation: 'Convocation',
+  message: 'Message',
+  other: 'Information',
+}

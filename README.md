@@ -116,6 +116,9 @@ L'autorisation vit **dans la base**, pas dans le frontend.
 - Les conflits d'emploi du temps sont impossibles par construction : trois
   contraintes `EXCLUDE USING gist` sur `timetable_slots` (salle, enseignant,
   classe). Aucune vérification équivalente n'existe côté client.
+- Les couleurs de graphiques sont validées par script (bande de clarté, plancher
+  de chroma, séparation daltonisme, contraste) et les teintes d'état — rouge,
+  ambre — ne servent jamais de série catégorielle.
 - Le rôle `anon` n'a aucun privilège sur `public` : l'accès anonyme est refusé au
   niveau des GRANT, sans dépendre de l'absence de policy.
 
@@ -130,6 +133,7 @@ L'autorisation vit **dans la base**, pas dans le frontend.
 | `npm run preview` | prévisualisation du build |
 | `supabase db reset` | recrée la base locale (migrations + seed) |
 | `supabase gen types typescript --local --schema public > web/src/types/database.types.ts` | régénère les types |
+| `node scripts/validate_palette.js "<hex,…>" --mode light` | valide une palette de graphiques (référentiel dataviz) |
 
 > Après toute migration, régénérer les types : le typecheck échoue sinon.
 
@@ -146,5 +150,5 @@ L'autorisation vit **dans la base**, pas dans le frontend.
 | 4 · Notes, moyennes /20 et ECTS, bulletins PDF | ✅ |
 | 5 · Examens : sessions, convocations, délibérations | ✅ |
 | 6 · Frais de scolarité : grilles, factures, paiements, relances | ✅ |
-| 7 · Présences | à venir |
-| 8 · Dashboards & communication | à venir |
+| 7 · Présences : appel, justificatifs, alertes | ✅ |
+| 8 · Dashboards, annonces, notifications temps réel | ✅ |

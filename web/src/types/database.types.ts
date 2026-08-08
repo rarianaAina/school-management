@@ -9,6 +9,90 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      absence_justifications: {
+        Row: {
+          created_at: string
+          document_path: string | null
+          end_date: string
+          id: string
+          reason: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          school_id: string
+          start_date: string
+          status: Database["public"]["Enums"]["justification_status"]
+          student_id: string
+          submitted_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_path?: string | null
+          end_date: string
+          id?: string
+          reason: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          school_id: string
+          start_date: string
+          status?: Database["public"]["Enums"]["justification_status"]
+          student_id: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_path?: string | null
+          end_date?: string
+          id?: string
+          reason?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          school_id?: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["justification_status"]
+          student_id?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "absence_justifications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "absence_justifications_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "absence_justifications_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "absence_justifications_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "absence_justifications_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academic_years: {
         Row: {
           created_at: string
@@ -46,6 +130,75 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "academic_years_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      announcements: {
+        Row: {
+          attachments: Json
+          audience: Database["public"]["Enums"]["announcement_audience"]
+          author_id: string | null
+          body: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_pinned: boolean
+          publish_at: string
+          school_id: string
+          target_class_ids: string[]
+          target_level_ids: string[]
+          target_roles: Database["public"]["Enums"]["user_role"][]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          audience?: Database["public"]["Enums"]["announcement_audience"]
+          author_id?: string | null
+          body: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_pinned?: boolean
+          publish_at?: string
+          school_id: string
+          target_class_ids?: string[]
+          target_level_ids?: string[]
+          target_roles?: Database["public"]["Enums"]["user_role"][]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          audience?: Database["public"]["Enums"]["announcement_audience"]
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_pinned?: boolean
+          publish_at?: string
+          school_id?: string
+          target_class_ids?: string[]
+          target_level_ids?: string[]
+          target_roles?: Database["public"]["Enums"]["user_role"][]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
@@ -174,6 +327,91 @@ export type Database = {
             columns: ["term_id"]
             isOneToOne: false
             referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_records: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          lesson_id: string
+          minutes_late: number | null
+          recorded_at: string
+          recorded_by: string | null
+          school_id: string
+          status: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          lesson_id: string
+          minutes_late?: number | null
+          recorded_at?: string
+          recorded_by?: string | null
+          school_id: string
+          status?: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          minutes_late?: number | null
+          recorded_at?: string
+          recorded_by?: string | null
+          school_id?: string
+          status?: Database["public"]["Enums"]["attendance_status"]
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_attendance"
+            referencedColumns: ["lesson_id"]
+          },
+          {
+            foreignKeyName: "attendance_records_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -537,6 +775,50 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_log: {
+        Row: {
+          error: string | null
+          id: string
+          provider_message_id: string | null
+          school_id: string
+          sent_at: string
+          status: string
+          subject: string | null
+          template: string | null
+          to_email: string
+        }
+        Insert: {
+          error?: string | null
+          id?: string
+          provider_message_id?: string | null
+          school_id: string
+          sent_at?: string
+          status?: string
+          subject?: string | null
+          template?: string | null
+          to_email: string
+        }
+        Update: {
+          error?: string | null
+          id?: string
+          provider_message_id?: string | null
+          school_id?: string
+          sent_at?: string
+          status?: string
+          subject?: string | null
+          template?: string | null
+          to_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_log_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
             referencedColumns: ["id"]
           },
         ]
@@ -1920,6 +2202,177 @@ export type Database = {
           },
           {
             foreignKeyName: "memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_recipients: {
+        Row: {
+          delivered_via: string
+          id: string
+          message_id: string
+          read_at: string | null
+          recipient_user_id: string | null
+          school_id: string
+          student_id: string | null
+        }
+        Insert: {
+          delivered_via?: string
+          id?: string
+          message_id: string
+          read_at?: string | null
+          recipient_user_id?: string | null
+          school_id: string
+          student_id?: string | null
+        }
+        Update: {
+          delivered_via?: string
+          id?: string
+          message_id?: string
+          read_at?: string | null
+          recipient_user_id?: string | null
+          school_id?: string
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_recipients_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_recipients_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_recipients_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_recipients_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_recipients_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          id: string
+          school_id: string
+          sender_id: string | null
+          sent_at: string
+          subject: string
+          thread_id: string | null
+        }
+        Insert: {
+          body: string
+          id?: string
+          school_id: string
+          sender_id?: string | null
+          sent_at?: string
+          subject: string
+          thread_id?: string | null
+        }
+        Update: {
+          body?: string
+          id?: string
+          school_id?: string
+          sender_id?: string | null
+          sent_at?: string
+          subject?: string
+          thread_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          data: Json
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          is_read: boolean
+          read_at: string | null
+          school_id: string
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          data?: Json
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          is_read?: boolean
+          read_at?: string | null
+          school_id: string
+          title: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          data?: Json
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          is_read?: boolean
+          read_at?: string | null
+          school_id?: string
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -3740,6 +4193,64 @@ export type Database = {
       }
     }
     Views: {
+      attendance_stats: {
+        Row: {
+          absent_count: number | null
+          attendance_rate: number | null
+          class_id: string | null
+          excused_count: number | null
+          last_absence: string | null
+          late_count: number | null
+          present_count: number | null
+          school_id: string | null
+          student_id: string | null
+          total_records: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "class_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["class_id"]
+          },
+        ]
+      }
       class_overview: {
         Row: {
           academic_year_id: string | null
@@ -3882,6 +4393,53 @@ export type Database = {
           },
           {
             foreignKeyName: "exam_sessions_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_attendance: {
+        Row: {
+          absent_count: number | null
+          class_id: string | null
+          class_name: string | null
+          date: string | null
+          is_taken: boolean | null
+          late_count: number | null
+          lesson_id: string | null
+          lesson_status: Database["public"]["Enums"]["lesson_status"] | null
+          recorded_count: number | null
+          school_id: string | null
+          start_time: string | null
+          subject_name: string | null
+          teacher_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "class_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["class_id"]
+          },
+          {
+            foreignKeyName: "lessons_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
@@ -4429,10 +4987,25 @@ export type Database = {
       }
     }
     Functions: {
+      absenteeism_alerts: {
+        Args: { p_school_id: string; p_since?: string; p_threshold?: number }
+        Returns: {
+          absent_count: number
+          attendance_rate: number
+          class_name: string
+          full_name: string
+          matricule: string
+          student_id: string
+        }[]
+      }
       apply_subject_template: { Args: { p_class_id: string }; Returns: number }
       assign_exam_seats: { Args: { p_exam_id: string }; Returns: number }
       assign_fees_to_student: {
         Args: { p_student_id: string; p_year_id: string }
+        Returns: number
+      }
+      broadcast_announcement: {
+        Args: { p_announcement_id: string }
         Returns: number
       }
       compute_deliberations: { Args: { p_session_id: string }; Returns: number }
@@ -4496,10 +5069,12 @@ export type Database = {
         Args: { p_due_date?: string; p_student_id: string; p_year_id: string }
         Returns: string
       }
+      mark_notifications_read: { Args: { p_ids?: string[] }; Returns: number }
       next_number: {
         Args: { p_kind: string; p_school: string; p_year?: number }
         Returns: string
       }
+      open_attendance_sheet: { Args: { p_lesson_id: string }; Returns: number }
       publish_term_results: {
         Args: { p_class_id: string; p_term_id: string }
         Returns: number
@@ -4525,6 +5100,13 @@ export type Database = {
       timemultirange: { Args: never; Returns: unknown }
     }
     Enums: {
+      announcement_audience: "all" | "role" | "level" | "class" | "student"
+      attendance_status:
+        | "present"
+        | "absent"
+        | "late"
+        | "excused"
+        | "left_early"
       calendar_event_type: "holiday" | "exam_period" | "closure" | "event"
       discount_kind: "percentage" | "fixed"
       enrollment_status:
@@ -4559,7 +5141,18 @@ export type Database = {
         | "paid"
         | "overdue"
         | "cancelled"
+      justification_status: "pending" | "approved" | "rejected"
       lesson_status: "planned" | "held" | "cancelled" | "replaced"
+      notification_type:
+        | "announcement"
+        | "grade_published"
+        | "report_card"
+        | "invoice"
+        | "payment_reminder"
+        | "absence"
+        | "exam_convocation"
+        | "message"
+        | "other"
       payment_method:
         | "cash"
         | "bank_transfer"
@@ -4737,6 +5330,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      announcement_audience: ["all", "role", "level", "class", "student"],
+      attendance_status: ["present", "absent", "late", "excused", "left_early"],
       calendar_event_type: ["holiday", "exam_period", "closure", "event"],
       discount_kind: ["percentage", "fixed"],
       enrollment_status: [
@@ -4775,7 +5370,19 @@ export const Constants = {
         "overdue",
         "cancelled",
       ],
+      justification_status: ["pending", "approved", "rejected"],
       lesson_status: ["planned", "held", "cancelled", "replaced"],
+      notification_type: [
+        "announcement",
+        "grade_published",
+        "report_card",
+        "invoice",
+        "payment_reminder",
+        "absence",
+        "exam_convocation",
+        "message",
+        "other",
+      ],
       payment_method: [
         "cash",
         "bank_transfer",

@@ -103,7 +103,6 @@ export const NAVIGATION: NavGroup[] = [
         to: '/presences',
         icon: ClipboardCheck,
         permission: ['attendance:read'],
-        soon: true,
       },
     ],
   },
@@ -121,7 +120,6 @@ export const NAVIGATION: NavGroup[] = [
         to: '/communication',
         icon: Megaphone,
         permission: ['announcement:read'],
-        soon: true,
       },
       {
         label: 'Paramètres',

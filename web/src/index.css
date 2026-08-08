@@ -48,11 +48,17 @@
   --sidebar-border: oklch(0.92 0.008 258);
   --sidebar-ring: oklch(0.52 0.16 258);
 
-  --chart-1: oklch(0.55 0.16 258);
-  --chart-2: oklch(0.65 0.13 190);
-  --chart-3: oklch(0.62 0.15 145);
-  --chart-4: oklch(0.75 0.14 75);
-  --chart-5: oklch(0.6 0.19 25);
+  /* Palette categorielle validee par scripts/validate_palette.js (mode light,
+     surface claire) : bande de clarte, plancher de chroma, separation
+     deuteranope/tritanope et plancher de vision normale tous PASS.
+     Les teintes rouge et ambre sont volontairement exclues : elles sont
+     reservees aux etats (alerte, retard, echec) et ne doivent jamais servir de
+     "serie 4". Ordre fixe, jamais recycle. */
+  --chart-1: oklch(0.48 0.18 262);
+  --chart-2: oklch(0.68 0.17 145);
+  --chart-3: oklch(0.56 0.2 310);
+  --chart-4: oklch(0.72 0.11 200);
+  --chart-5: oklch(0.6 0.13 35);
 }
 
 .dark {
@@ -97,11 +103,13 @@
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: oklch(0.68 0.14 258);
 
-  --chart-1: oklch(0.65 0.15 258);
-  --chart-2: oklch(0.72 0.12 190);
-  --chart-3: oklch(0.7 0.14 145);
-  --chart-4: oklch(0.8 0.13 75);
-  --chart-5: oklch(0.68 0.17 25);
+  /* Pas un simple eclaircissement de la palette claire : ces pas sont
+     re-choisis et revalides contre la surface sombre. */
+  --chart-1: oklch(0.64 0.16 262);
+  --chart-2: oklch(0.66 0.16 145);
+  --chart-3: oklch(0.66 0.18 310);
+  --chart-4: oklch(0.65 0.12 200);
+  --chart-5: oklch(0.67 0.15 35);
 }
 
 @theme inline {

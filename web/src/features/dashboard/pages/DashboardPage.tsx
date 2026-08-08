@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase'
 import { formatDate } from '@/lib/formatters'
 import { SCHOOL_TYPE_LABELS } from '@/types/domain'
 import { cn } from '@/lib/utils'
+import { AdminDashboard } from './AdminDashboard'
 
 interface SetupStep {
   label: string
@@ -21,7 +22,20 @@ interface SetupStep {
   cta?: string
 }
 
+/**
+ * Aiguillage par rôle : l'administration reçoit le pilotage complet ; les
+ * autres rôles gardent la vue de mise en route tant que leur espace dédié
+ * n'est pas livré.
+ */
 export function DashboardPage() {
+  const { role } = useSchool()
+  if (role === 'super_admin' || role === 'school_admin' || role === 'accountant') {
+    return <AdminDashboard />
+  }
+  return <SetupDashboard />
+}
+
+function SetupDashboard() {
   const { school, schoolId, settings, currentYear, currentTerm, terms, can } = useSchool()
   const { profile } = useAuth()
 

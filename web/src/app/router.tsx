@@ -87,6 +87,14 @@ const ExamsPage = lazy(() =>
 const FinancePage = lazy(() =>
   import('@/features/finance/pages/FinancePage').then((m) => ({ default: m.FinancePage })),
 )
+const AttendancePage = lazy(() =>
+  import('@/features/attendance/pages/AttendancePage').then((m) => ({ default: m.AttendancePage })),
+)
+const CommunicationPage = lazy(() =>
+  import('@/features/communication/pages/CommunicationPage').then((m) => ({
+    default: m.CommunicationPage,
+  })),
+)
 const TeachersPage = lazy(() =>
   import('@/features/staff/pages/TeachersPage').then((m) => ({ default: m.TeachersPage })),
 )
@@ -243,6 +251,23 @@ export function AppRouter() {
                 element={
                   <RequirePermission permission={['finance:read', 'finance:read_own']}>
                     <FinancePage />
+                  </RequirePermission>
+                }
+              />
+
+              <Route
+                path="/presences"
+                element={
+                  <RequirePermission permission="attendance:read">
+                    <AttendancePage />
+                  </RequirePermission>
+                }
+              />
+              <Route
+                path="/communication"
+                element={
+                  <RequirePermission permission="announcement:read">
+                    <CommunicationPage />
                   </RequirePermission>
                 }
               />
