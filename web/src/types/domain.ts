@@ -312,3 +312,48 @@ export const SUPERVISOR_ROLE_LABELS: Record<SupervisorRole, string> = {
   chief: 'Responsable de salle',
   floater: 'Surveillant volant',
 }
+
+// -----------------------------------------------------------------------------
+// Module 6 — finances
+// -----------------------------------------------------------------------------
+export type FeeStatus = Enums<'fee_status'>
+export type InvoiceStatus = Enums<'invoice_status'>
+export type PaymentMethod = Enums<'payment_method'>
+export type PaymentStatus = Enums<'payment_status'>
+export type DiscountKind = Enums<'discount_kind'>
+
+export type FeeCategory = Tables<'fee_categories'>
+export type FeeStructure = Tables<'fee_structures'>
+export type Scholarship = Tables<'scholarships'>
+export type StudentFee = Tables<'student_fees'>
+export type Invoice = Tables<'invoices'>
+export type InvoiceLine = Tables<'invoice_lines'>
+export type Payment = Tables<'payments'>
+export type StudentBalance = Tables<'student_balances'>
+export type MonthlyRevenue = Tables<'monthly_revenue'>
+
+export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
+  draft: 'Brouillon',
+  issued: 'Émise',
+  partially_paid: 'Partiellement payée',
+  paid: 'Soldée',
+  overdue: 'En retard',
+  cancelled: 'Annulée',
+}
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  cash: 'Espèces',
+  bank_transfer: 'Virement',
+  mobile_money: 'Mobile money',
+  card: 'Carte bancaire',
+  check: 'Chèque',
+  other: 'Autre',
+}
+
+export const FEE_STATUS_LABELS: Record<FeeStatus, string> = {
+  pending: 'À payer',
+  partial: 'Partiel',
+  paid: 'Soldé',
+  waived: 'Exonéré',
+  overdue: 'En retard',
+}

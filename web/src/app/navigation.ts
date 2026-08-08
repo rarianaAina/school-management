@@ -115,7 +115,6 @@ export const NAVIGATION: NavGroup[] = [
         to: '/finances',
         icon: CreditCard,
         permission: ['finance:read', 'finance:read_own'],
-        soon: true,
       },
       {
         label: 'Communication',

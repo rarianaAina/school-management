@@ -84,6 +84,9 @@ const ReportCardsPage = lazy(() =>
 const ExamsPage = lazy(() =>
   import('@/features/exams/pages/ExamsPage').then((m) => ({ default: m.ExamsPage })),
 )
+const FinancePage = lazy(() =>
+  import('@/features/finance/pages/FinancePage').then((m) => ({ default: m.FinancePage })),
+)
 const TeachersPage = lazy(() =>
   import('@/features/staff/pages/TeachersPage').then((m) => ({ default: m.TeachersPage })),
 )
@@ -150,7 +153,6 @@ export function AppRouter() {
                   enseignant / élève / parent / comptable partagent le tableau de bord. */}
               <Route path="/enseignant" element={<DashboardPage />} />
               <Route path="/mon-espace" element={<DashboardPage />} />
-              <Route path="/finances" element={<DashboardPage />} />
 
               <Route
                 path="/eleves"
@@ -232,6 +234,15 @@ export function AppRouter() {
                 element={
                   <RequirePermission permission="exam:read">
                     <ExamsPage />
+                  </RequirePermission>
+                }
+              />
+
+              <Route
+                path="/finances"
+                element={
+                  <RequirePermission permission={['finance:read', 'finance:read_own']}>
+                    <FinancePage />
                   </RequirePermission>
                 }
               />
