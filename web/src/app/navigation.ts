@@ -97,7 +97,6 @@ export const NAVIGATION: NavGroup[] = [
         to: '/examens',
         icon: FileSpreadsheet,
         permission: ['exam:read'],
-        soon: true,
       },
       {
         label: 'Présences',

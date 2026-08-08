@@ -264,3 +264,51 @@ export function mentionFor(average: number | null, scale = 20): string | null {
   if (ratio >= 10) return 'Passable'
   return null
 }
+
+// -----------------------------------------------------------------------------
+// Module 5 — examens
+// -----------------------------------------------------------------------------
+export type ExamSessionType = Enums<'exam_session_type'>
+export type ExamSessionStatus = Enums<'exam_session_status'>
+export type ExamDecision = Enums<'exam_decision'>
+export type RegistrationStatus = Enums<'registration_status'>
+export type SupervisorRole = Enums<'supervisor_role'>
+
+export type ExamSession = Tables<'exam_sessions'>
+export type ExamSessionOverview = Tables<'exam_session_overview'>
+export type Exam = Tables<'exams'>
+export type ExamRegistration = Tables<'exam_registrations'>
+export type ExamResult = Tables<'exam_results'>
+export type Deliberation = Tables<'deliberations'>
+export type Transcript = Tables<'transcripts'>
+
+export const EXAM_SESSION_TYPE_LABELS: Record<ExamSessionType, string> = {
+  regular: 'Session normale',
+  resit: 'Session de rattrapage',
+  entrance: "Concours d'entrée",
+  final: 'Examen final',
+  mock: 'Examen blanc',
+}
+
+export const EXAM_SESSION_STATUS_LABELS: Record<ExamSessionStatus, string> = {
+  draft: 'Brouillon',
+  scheduled: 'Planifiée',
+  ongoing: 'En cours',
+  graded: 'Corrigée',
+  deliberated: 'Délibérée',
+  closed: 'Clôturée',
+}
+
+export const EXAM_DECISION_LABELS: Record<ExamDecision, string> = {
+  admitted: 'Admis',
+  failed: 'Ajourné',
+  resit: 'Rattrapage',
+  deferred: 'Reporté',
+  excluded: 'Exclu',
+}
+
+export const SUPERVISOR_ROLE_LABELS: Record<SupervisorRole, string> = {
+  invigilator: 'Surveillant',
+  chief: 'Responsable de salle',
+  floater: 'Surveillant volant',
+}

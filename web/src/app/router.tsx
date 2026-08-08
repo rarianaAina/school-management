@@ -81,6 +81,9 @@ const GradingPage = lazy(() =>
 const ReportCardsPage = lazy(() =>
   import('@/features/grading/pages/ReportCardsPage').then((m) => ({ default: m.ReportCardsPage })),
 )
+const ExamsPage = lazy(() =>
+  import('@/features/exams/pages/ExamsPage').then((m) => ({ default: m.ExamsPage })),
+)
 const TeachersPage = lazy(() =>
   import('@/features/staff/pages/TeachersPage').then((m) => ({ default: m.TeachersPage })),
 )
@@ -220,6 +223,15 @@ export function AppRouter() {
                 element={
                   <RequirePermission permission={['grade:read', 'grade:read_own']}>
                     <ReportCardsPage />
+                  </RequirePermission>
+                }
+              />
+
+              <Route
+                path="/examens"
+                element={
+                  <RequirePermission permission="exam:read">
+                    <ExamsPage />
                   </RequirePermission>
                 }
               />

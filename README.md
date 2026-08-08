@@ -144,7 +144,7 @@ L'autorisation vit **dans la base**, pas dans le frontend.
 | 2 · Élèves, classes, référentiels, enseignants, import CSV | ✅ |
 | 3 · Emplois du temps (anti-conflit, drag & drop, séances) | ✅ |
 | 4 · Notes, moyennes /20 et ECTS, bulletins PDF | ✅ |
-| 5 · Examens | à venir |
+| 5 · Examens : sessions, convocations, délibérations | ✅ |
 | 6 · Frais de scolarité | à venir |
 | 7 · Présences | à venir |
 | 8 · Dashboards & communication | à venir |

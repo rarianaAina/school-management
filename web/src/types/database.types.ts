@@ -440,6 +440,107 @@ export type Database = {
           },
         ]
       }
+      deliberations: {
+        Row: {
+          computed_average: number | null
+          computed_decision: Database["public"]["Enums"]["exam_decision"] | null
+          created_at: string
+          credits_earned: number | null
+          credits_required: number | null
+          decided_at: string | null
+          decided_by: string | null
+          decision: Database["public"]["Enums"]["exam_decision"] | null
+          exam_session_id: string
+          id: string
+          jury_comment: string | null
+          resit_subject_ids: string[]
+          school_id: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          computed_average?: number | null
+          computed_decision?:
+            | Database["public"]["Enums"]["exam_decision"]
+            | null
+          created_at?: string
+          credits_earned?: number | null
+          credits_required?: number | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: Database["public"]["Enums"]["exam_decision"] | null
+          exam_session_id: string
+          id?: string
+          jury_comment?: string | null
+          resit_subject_ids?: string[]
+          school_id: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          computed_average?: number | null
+          computed_decision?:
+            | Database["public"]["Enums"]["exam_decision"]
+            | null
+          created_at?: string
+          credits_earned?: number | null
+          credits_required?: number | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: Database["public"]["Enums"]["exam_decision"] | null
+          exam_session_id?: string
+          id?: string
+          jury_comment?: string | null
+          resit_subject_ids?: string[]
+          school_id?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deliberations_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliberations_exam_session_id_fkey"
+            columns: ["exam_session_id"]
+            isOneToOne: false
+            referencedRelation: "exam_session_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliberations_exam_session_id_fkey"
+            columns: ["exam_session_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliberations_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliberations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliberations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enrollments: {
         Row: {
           academic_year_id: string
@@ -532,6 +633,454 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_registrations: {
+        Row: {
+          convocation_number: string | null
+          convocation_pdf_path: string | null
+          created_at: string
+          exam_room_id: string | null
+          exam_session_id: string
+          id: string
+          school_id: string
+          seat_number: number | null
+          status: Database["public"]["Enums"]["registration_status"]
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          convocation_number?: string | null
+          convocation_pdf_path?: string | null
+          created_at?: string
+          exam_room_id?: string | null
+          exam_session_id: string
+          id?: string
+          school_id: string
+          seat_number?: number | null
+          status?: Database["public"]["Enums"]["registration_status"]
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          convocation_number?: string | null
+          convocation_pdf_path?: string | null
+          created_at?: string
+          exam_room_id?: string | null
+          exam_session_id?: string
+          id?: string
+          school_id?: string
+          seat_number?: number | null
+          status?: Database["public"]["Enums"]["registration_status"]
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_registrations_exam_room_id_fkey"
+            columns: ["exam_room_id"]
+            isOneToOne: false
+            referencedRelation: "exam_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_registrations_exam_session_id_fkey"
+            columns: ["exam_session_id"]
+            isOneToOne: false
+            referencedRelation: "exam_session_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_registrations_exam_session_id_fkey"
+            columns: ["exam_session_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_registrations_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_registrations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_registrations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_results: {
+        Row: {
+          exam_id: string
+          graded_at: string
+          graded_by: string | null
+          id: string
+          is_absent: boolean
+          is_disqualified: boolean
+          remark: string | null
+          school_id: string
+          score: number | null
+          student_id: string
+        }
+        Insert: {
+          exam_id: string
+          graded_at?: string
+          graded_by?: string | null
+          id?: string
+          is_absent?: boolean
+          is_disqualified?: boolean
+          remark?: string | null
+          school_id: string
+          score?: number | null
+          student_id: string
+        }
+        Update: {
+          exam_id?: string
+          graded_at?: string
+          graded_by?: string | null
+          id?: string
+          is_absent?: boolean
+          is_disqualified?: boolean
+          remark?: string | null
+          school_id?: string
+          score?: number | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_results_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_results_graded_by_fkey"
+            columns: ["graded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_results_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_rooms: {
+        Row: {
+          capacity: number | null
+          exam_id: string
+          id: string
+          room_id: string
+          school_id: string
+        }
+        Insert: {
+          capacity?: number | null
+          exam_id: string
+          id?: string
+          room_id: string
+          school_id: string
+        }
+        Update: {
+          capacity?: number | null
+          exam_id?: string
+          id?: string
+          room_id?: string
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_rooms_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_rooms_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_rooms_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_sessions: {
+        Row: {
+          academic_year_id: string
+          created_at: string
+          end_date: string
+          id: string
+          instructions: string | null
+          name: string
+          school_id: string
+          start_date: string
+          status: Database["public"]["Enums"]["exam_session_status"]
+          term_id: string | null
+          type: Database["public"]["Enums"]["exam_session_type"]
+          updated_at: string
+        }
+        Insert: {
+          academic_year_id: string
+          created_at?: string
+          end_date: string
+          id?: string
+          instructions?: string | null
+          name: string
+          school_id: string
+          start_date: string
+          status?: Database["public"]["Enums"]["exam_session_status"]
+          term_id?: string | null
+          type?: Database["public"]["Enums"]["exam_session_type"]
+          updated_at?: string
+        }
+        Update: {
+          academic_year_id?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          instructions?: string | null
+          name?: string
+          school_id?: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["exam_session_status"]
+          term_id?: string | null
+          type?: Database["public"]["Enums"]["exam_session_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_sessions_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_sessions_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_sessions_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_supervisors: {
+        Row: {
+          exam_room_id: string
+          id: string
+          role: Database["public"]["Enums"]["supervisor_role"]
+          school_id: string
+          teacher_id: string
+        }
+        Insert: {
+          exam_room_id: string
+          id?: string
+          role?: Database["public"]["Enums"]["supervisor_role"]
+          school_id: string
+          teacher_id: string
+        }
+        Update: {
+          exam_room_id?: string
+          id?: string
+          role?: Database["public"]["Enums"]["supervisor_role"]
+          school_id?: string
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_supervisors_exam_room_id_fkey"
+            columns: ["exam_room_id"]
+            isOneToOne: false
+            referencedRelation: "exam_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_supervisors_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_supervisors_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_supervisors_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exams: {
+        Row: {
+          class_id: string | null
+          coefficient: number
+          created_at: string
+          date: string
+          duration_minutes: number
+          exam_session_id: string
+          id: string
+          instructions: string | null
+          level_id: string | null
+          max_score: number
+          school_id: string
+          start_time: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id?: string | null
+          coefficient?: number
+          created_at?: string
+          date: string
+          duration_minutes?: number
+          exam_session_id: string
+          id?: string
+          instructions?: string | null
+          level_id?: string | null
+          max_score?: number
+          school_id: string
+          start_time: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string | null
+          coefficient?: number
+          created_at?: string
+          date?: string
+          duration_minutes?: number
+          exam_session_id?: string
+          id?: string
+          instructions?: string | null
+          level_id?: string | null
+          max_score?: number
+          school_id?: string
+          start_time?: string
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exams_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "class_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exams_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exams_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["class_id"]
+          },
+          {
+            foreignKeyName: "exams_exam_session_id_fkey"
+            columns: ["exam_session_id"]
+            isOneToOne: false
+            referencedRelation: "exam_session_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exams_exam_session_id_fkey"
+            columns: ["exam_session_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exams_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exams_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["level_id"]
+          },
+          {
+            foreignKeyName: "exams_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exams_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exams_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "timetable_view"
+            referencedColumns: ["subject_id"]
           },
         ]
       }
@@ -2391,6 +2940,92 @@ export type Database = {
           },
         ]
       }
+      transcripts: {
+        Row: {
+          academic_year_id: string
+          exam_session_id: string | null
+          id: string
+          issued_at: string
+          issued_by: string | null
+          pdf_path: string | null
+          school_id: string
+          serial_number: string
+          student_id: string
+        }
+        Insert: {
+          academic_year_id: string
+          exam_session_id?: string | null
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          pdf_path?: string | null
+          school_id: string
+          serial_number: string
+          student_id: string
+        }
+        Update: {
+          academic_year_id?: string
+          exam_session_id?: string | null
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          pdf_path?: string | null
+          school_id?: string
+          serial_number?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcripts_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcripts_exam_session_id_fkey"
+            columns: ["exam_session_id"]
+            isOneToOne: false
+            referencedRelation: "exam_session_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcripts_exam_session_id_fkey"
+            columns: ["exam_session_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcripts_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcripts_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcripts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcripts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       class_overview: {
@@ -2475,6 +3110,66 @@ export type Database = {
           },
           {
             foreignKeyName: "classes_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_session_overview: {
+        Row: {
+          academic_year_id: string | null
+          admitted_count: number | null
+          deliberated_count: number | null
+          end_date: string | null
+          exam_count: number | null
+          id: string | null
+          name: string | null
+          registered_count: number | null
+          school_id: string | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["exam_session_status"] | null
+          type: Database["public"]["Enums"]["exam_session_type"] | null
+        }
+        Insert: {
+          academic_year_id?: string | null
+          admitted_count?: never
+          deliberated_count?: never
+          end_date?: string | null
+          exam_count?: never
+          id?: string | null
+          name?: string | null
+          registered_count?: never
+          school_id?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["exam_session_status"] | null
+          type?: Database["public"]["Enums"]["exam_session_type"] | null
+        }
+        Update: {
+          academic_year_id?: string | null
+          admitted_count?: never
+          deliberated_count?: never
+          end_date?: string | null
+          exam_count?: never
+          id?: string | null
+          name?: string | null
+          registered_count?: never
+          school_id?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["exam_session_status"] | null
+          type?: Database["public"]["Enums"]["exam_session_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_sessions_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_sessions_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
@@ -2961,6 +3656,8 @@ export type Database = {
     }
     Functions: {
       apply_subject_template: { Args: { p_class_id: string }; Returns: number }
+      assign_exam_seats: { Args: { p_exam_id: string }; Returns: number }
+      compute_deliberations: { Args: { p_session_id: string }; Returns: number }
       compute_term_results: {
         Args: { p_class_id: string; p_term_id: string }
         Returns: number
@@ -3025,6 +3722,14 @@ export type Database = {
         Args: { p_class_id: string; p_term_id: string }
         Returns: number
       }
+      push_exam_to_grades: {
+        Args: { p_exam_id: string; p_term_id: string }
+        Returns: number
+      }
+      register_class_for_session: {
+        Args: { p_class_id: string; p_session_id: string }
+        Returns: number
+      }
       timemultirange: { Args: never; Returns: unknown }
     }
     Enums: {
@@ -3035,6 +3740,15 @@ export type Database = {
         | "withdrawn"
         | "repeating"
         | "completed"
+      exam_decision: "admitted" | "failed" | "resit" | "deferred" | "excluded"
+      exam_session_status:
+        | "draft"
+        | "scheduled"
+        | "ongoing"
+        | "graded"
+        | "deliberated"
+        | "closed"
+      exam_session_type: "regular" | "resit" | "entrance" | "final" | "mock"
       guardian_relationship:
         | "father"
         | "mother"
@@ -3045,6 +3759,7 @@ export type Database = {
         | "other"
       import_status: "pending" | "processing" | "completed" | "failed"
       lesson_status: "planned" | "held" | "cancelled" | "replaced"
+      registration_status: "registered" | "absent" | "excluded"
       room_type:
         | "classroom"
         | "lab"
@@ -3075,6 +3790,7 @@ export type Database = {
         | "discovery"
         | "transversal"
         | "other"
+      supervisor_role: "invigilator" | "chief" | "floater"
       term_kind: "trimester" | "semester" | "quarter" | "year"
       user_role:
         | "super_admin"
@@ -3219,6 +3935,16 @@ export const Constants = {
         "repeating",
         "completed",
       ],
+      exam_decision: ["admitted", "failed", "resit", "deferred", "excluded"],
+      exam_session_status: [
+        "draft",
+        "scheduled",
+        "ongoing",
+        "graded",
+        "deliberated",
+        "closed",
+      ],
+      exam_session_type: ["regular", "resit", "entrance", "final", "mock"],
       guardian_relationship: [
         "father",
         "mother",
@@ -3230,6 +3956,7 @@ export const Constants = {
       ],
       import_status: ["pending", "processing", "completed", "failed"],
       lesson_status: ["planned", "held", "cancelled", "replaced"],
+      registration_status: ["registered", "absent", "excluded"],
       room_type: [
         "classroom",
         "lab",
@@ -3264,6 +3991,7 @@ export const Constants = {
         "transversal",
         "other",
       ],
+      supervisor_role: ["invigilator", "chief", "floater"],
       term_kind: ["trimester", "semester", "quarter", "year"],
       user_role: [
         "super_admin",
