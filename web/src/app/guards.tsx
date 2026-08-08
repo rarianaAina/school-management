@@ -28,11 +28,17 @@ export function RequireAuth() {
   return <Outlet />
 }
 
-/** Un établissement actif est requis : sinon, onboarding. */
+/**
+ * Un établissement actif est requis : sinon, onboarding.
+ *
+ * L'attente porte sur `isReady` — l'appartenance est-elle connue — et non sur
+ * le chargement des données de l'établissement : un utilisateur qui n'en a
+ * aucun doit partir vers l'onboarding, pas rester sur un écran de chargement.
+ */
 export function RequireSchool() {
-  const { schoolId, isLoading } = useSchool()
+  const { schoolId, isReady } = useSchool()
 
-  if (isLoading && !schoolId) return <FullPageLoader />
+  if (!isReady) return <FullPageLoader />
 
   if (!schoolId) return <Navigate to="/bienvenue" replace />
 
@@ -41,9 +47,9 @@ export function RequireSchool() {
 
 /** L'inverse : réservé aux utilisateurs sans établissement (page d'onboarding). */
 export function RequireNoSchool({ children }: { children: ReactNode }) {
-  const { schoolId, isLoading } = useSchool()
+  const { schoolId, isReady } = useSchool()
 
-  if (isLoading) return <FullPageLoader />
+  if (!isReady) return <FullPageLoader />
   if (schoolId) return <Navigate to="/" replace />
 
   return <>{children}</>

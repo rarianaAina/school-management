@@ -41,6 +41,13 @@ interface SchoolContextValue {
   selectYear: (yearId: string) => void
   terms: Term[]
   currentTerm: Term | null
+  /**
+   * L'appartenance de l'utilisateur est connue : on sait s'il a un
+   * établissement ou non. C'est cet indicateur que doivent consulter les gardes
+   * de route — jamais `isLoading`, qui suit le chargement des données de
+   * l'établissement actif et n'a pas de sens quand il n'y en a aucun.
+   */
+  isReady: boolean
   isLoading: boolean
 }
 
@@ -150,7 +157,11 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
       selectYear: setRequestedYearId,
       terms,
       currentTerm,
-      isLoading: !isReady || yearsQuery.isPending,
+      isReady,
+      // `isPending` reste vrai indéfiniment sur une requête désactivée : sans
+      // établissement, yearsQuery ne part jamais. On s'appuie donc sur
+      // `isLoading` (= isPending && isFetching), faux tant que la requête dort.
+      isLoading: !isReady || yearsQuery.isLoading,
     }),
     [
       school,
@@ -165,7 +176,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
       terms,
       currentTerm,
       isReady,
-      yearsQuery.isPending,
+      yearsQuery.isLoading,
     ],
   )
 

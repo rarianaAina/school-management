@@ -130,6 +130,7 @@ L'autorisation vit **dans la base**, pas dans le frontend.
 |---|---|
 | `npm run dev` | serveur de développement Vite |
 | `npm run build` | typecheck + build de production |
+| `npm test` | tests unitaires (Vitest) |
 | `npm run preview` | prévisualisation du build |
 | `supabase db reset` | recrée la base locale (migrations + seed) |
 | `supabase gen types typescript --local --schema public > web/src/types/database.types.ts` | régénère les types |
