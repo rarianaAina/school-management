@@ -4,7 +4,7 @@ node_modules/
 .pnp.js
 
 # Build
-dist/
+web/dist/
 dist-ssr/
 build/
 *.local
