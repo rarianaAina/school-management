@@ -212,6 +212,16 @@ export function LoginPage() {
           <MagicLinkForm />
         </TabsContent>
       </Tabs>
+
+      <p className="text-center text-sm text-muted-foreground text-pretty">
+        Votre établissement n&apos;est pas encore sur Scolaria ?{' '}
+        <Link
+          to="/creer-un-etablissement"
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+        >
+          Le créer
+        </Link>
+      </p>
     </div>
   )
 }

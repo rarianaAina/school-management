@@ -26,10 +26,21 @@ supabase db push
 supabase functions deploy invite-member
 ```
 
-**Option B — sans CLI** : exécuter [`supabase/dist/schema-complet.sql`](supabase/dist/schema-complet.sql)
+**Option B — sans mot de passe de base** : `supabase db push` exige le mot de passe
+Postgres du projet. Si vous ne l'avez pas, l'API Management suffit :
+
+```bash
+SUPABASE_ACCESS_TOKEN=sbp_xxx PROJECT_REF=xxxxx python3 supabase/scripts/apply-remote.py
+```
+
+Le script rejoue les migrations manquantes et les enregistre dans
+`supabase_migrations.schema_migrations`, de sorte que `supabase db push` reste
+cohérent ensuite. Il est idempotent.
+
+**Option C — sans CLI du tout** : exécuter [`supabase/dist/schema-complet.sql`](supabase/dist/schema-complet.sql)
 dans *Supabase Studio → SQL Editor*, sur un projet vierge.
 
-**Option C — développement local** (Docker requis)
+**Option D — développement local** (Docker requis)
 
 ```bash
 supabase start      # ports décalés : API 54421, DB 54422
@@ -47,9 +58,11 @@ npm run dev
 
 ### 3. Premier compte
 
-Aucune inscription publique : le premier utilisateur crée son établissement via
-l'écran d'accueil (`/bienvenue`) et en devient *super administrateur*. Les autres
-membres sont ensuite invités par e-mail depuis **Paramètres → Membres & rôles**.
+Le tout premier compte se crée depuis `/creer-un-etablissement` : son auteur
+enchaîne sur l'onboarding et devient *super administrateur* de l'établissement.
+Tous les autres membres — enseignants, élèves, parents, comptabilité — sont
+ensuite invités par e-mail depuis **Paramètres → Membres & rôles**, sans passer
+par une inscription publique.
 
 En local, le seed fournit six comptes (mot de passe `Demo1234!`) :
 
@@ -100,6 +113,8 @@ L'autorisation vit **dans la base**, pas dans le frontend.
   il ne les remplace pas.
 - Numérotation (matricules, factures) via `next_number()`, atomique et sans trou.
 - `audit_logs` journalise les opérations sensibles.
+- Le rôle `anon` n'a aucun privilège sur `public` : l'accès anonyme est refusé au
+  niveau des GRANT, sans dépendre de l'absence de policy.
 
 ---
 

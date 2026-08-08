@@ -18,6 +18,9 @@ import { NotFoundPage } from '@/app/pages/NotFoundPage'
 const LoginPage = lazy(() =>
   import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage })),
 )
+const SignupPage = lazy(() =>
+  import('@/features/auth/pages/SignupPage').then((m) => ({ default: m.SignupPage })),
+)
 const ForgotPasswordPage = lazy(() =>
   import('@/features/auth/pages/ForgotPasswordPage').then((m) => ({
     default: m.ForgotPasswordPage,
@@ -92,6 +95,14 @@ export function AppRouter() {
             element={
               <RedirectIfAuthenticated>
                 <LoginPage />
+              </RedirectIfAuthenticated>
+            }
+          />
+          <Route
+            path="/creer-un-etablissement"
+            element={
+              <RedirectIfAuthenticated>
+                <SignupPage />
               </RedirectIfAuthenticated>
             }
           />
