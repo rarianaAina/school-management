@@ -143,7 +143,7 @@ L'autorisation vit **dans la base**, pas dans le frontend.
 | 1 · Auth, rôles, multi-tenant, années & périodes, membres | ✅ |
 | 2 · Élèves, classes, référentiels, enseignants, import CSV | ✅ |
 | 3 · Emplois du temps (anti-conflit, drag & drop, séances) | ✅ |
-| 4 · Notes & bulletins | à venir |
+| 4 · Notes, moyennes /20 et ECTS, bulletins PDF | ✅ |
 | 5 · Examens | à venir |
 | 6 · Frais de scolarité | à venir |
 | 7 · Présences | à venir |

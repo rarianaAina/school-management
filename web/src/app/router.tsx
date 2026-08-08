@@ -75,6 +75,12 @@ const ReferentialsPage = lazy(() =>
 const TimetablePage = lazy(() =>
   import('@/features/timetable/pages/TimetablePage').then((m) => ({ default: m.TimetablePage })),
 )
+const GradingPage = lazy(() =>
+  import('@/features/grading/pages/GradingPage').then((m) => ({ default: m.GradingPage })),
+)
+const ReportCardsPage = lazy(() =>
+  import('@/features/grading/pages/ReportCardsPage').then((m) => ({ default: m.ReportCardsPage })),
+)
 const TeachersPage = lazy(() =>
   import('@/features/staff/pages/TeachersPage').then((m) => ({ default: m.TeachersPage })),
 )
@@ -197,6 +203,23 @@ export function AppRouter() {
                 element={
                   <RequirePermission permission="timetable:read">
                     <TimetablePage />
+                  </RequirePermission>
+                }
+              />
+
+              <Route
+                path="/notes"
+                element={
+                  <RequirePermission permission={['grade:read', 'grade:read_own']}>
+                    <GradingPage />
+                  </RequirePermission>
+                }
+              />
+              <Route
+                path="/bulletins"
+                element={
+                  <RequirePermission permission={['grade:read', 'grade:read_own']}>
+                    <ReportCardsPage />
                   </RequirePermission>
                 }
               />

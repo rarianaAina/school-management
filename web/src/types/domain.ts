@@ -230,3 +230,37 @@ export const LESSON_STATUS_LABELS: Record<LessonStatus, string> = {
   cancelled: 'Annulée',
   replaced: 'Remplacée',
 }
+
+// -----------------------------------------------------------------------------
+// Module 4 — notes et bulletins
+// -----------------------------------------------------------------------------
+export type StudyUnitKind = Enums<'study_unit_kind'>
+export type ValidationMode = Enums<'validation_mode'>
+
+export type AssessmentType = Tables<'assessment_types'>
+export type Assessment = Tables<'assessments'>
+export type Grade = Tables<'grades'>
+export type StudyUnit = Tables<'study_units'>
+export type SubjectAverage = Tables<'subject_averages'>
+export type TermAverage = Tables<'term_averages'>
+export type UnitAverage = Tables<'unit_averages'>
+export type TermSubjectResult = Tables<'term_subject_results'>
+export type TermUnitResult = Tables<'term_unit_results'>
+export type TermResult = Tables<'term_results'>
+
+export const VALIDATION_MODE_LABELS: Record<ValidationMode, string> = {
+  direct: 'Validation directe',
+  compensation: 'Par compensation',
+  resit: 'Après rattrapage',
+}
+
+/** Mention française usuelle, calculée sur le barème de l'établissement. */
+export function mentionFor(average: number | null, scale = 20): string | null {
+  if (average === null) return null
+  const ratio = (average / scale) * 20
+  if (ratio >= 16) return 'Très bien'
+  if (ratio >= 14) return 'Bien'
+  if (ratio >= 12) return 'Assez bien'
+  if (ratio >= 10) return 'Passable'
+  return null
+}

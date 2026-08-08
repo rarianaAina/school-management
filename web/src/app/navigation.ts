@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   CreditCard,
   FileSpreadsheet,
+  FileText,
   GraduationCap,
   Layers,
   LayoutDashboard,
@@ -80,11 +81,16 @@ export const NAVIGATION: NavGroup[] = [
     label: 'Évaluation',
     items: [
       {
-        label: 'Notes & bulletins',
+        label: 'Notes',
         to: '/notes',
         icon: GraduationCap,
         permission: ['grade:read', 'grade:read_own'],
-        soon: true,
+      },
+      {
+        label: 'Bulletins',
+        to: '/bulletins',
+        icon: FileText,
+        permission: ['grade:read', 'grade:read_own'],
       },
       {
         label: 'Examens',

@@ -368,3 +368,170 @@ begin
     v_n, (select count(*) from public.lessons where school_id = v_lycee);
 end
 $$;
+
+-- =============================================================================
+-- Module 4 — evaluations et notes
+--   Lycee   : moyennes /20 ponderees par coefficient
+--   Faculte : unites d'enseignement et credits ECTS
+-- =============================================================================
+do $$
+declare
+  v_lycee   uuid;
+  v_univ    uuid;
+  v_term    uuid;
+  v_admin   uuid := '10000000-0000-4000-a000-000000000001';
+  v_dean    uuid := '10000000-0000-4000-a000-000000000006';
+  v_type_ds uuid;
+  v_type_cc uuid;
+  v_cs      record;
+  v_stu     record;
+  v_assess  uuid;
+  v_i       integer;
+  v_score   numeric;
+
+  v_year_u  uuid;
+  v_term_u  uuid;
+  v_level_u uuid;
+  v_class_u uuid;
+  v_ue1     uuid;
+  v_ue2     uuid;
+  v_subj    uuid;
+  v_cs_u    uuid;
+  v_stu_u   uuid;
+begin
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_admin, 'role', 'authenticated')::text, true);
+
+  select id into v_lycee from public.schools where slug = 'lycee-victor-hugo';
+  select id into v_term  from public.terms where school_id = v_lycee and sequence = 1;
+
+  insert into public.assessment_types (school_id, name, code, default_weight) values
+    (v_lycee, 'Devoir surveille', 'DS', 2),
+    (v_lycee, 'Controle continu', 'CC', 1),
+    (v_lycee, 'Examen',           'EX', 3);
+
+  select id into v_type_ds from public.assessment_types where school_id = v_lycee and code = 'DS';
+  select id into v_type_cc from public.assessment_types where school_id = v_lycee and code = 'CC';
+
+  -- Deux evaluations par matiere de Seconde A, notees pour tous les inscrits.
+  for v_cs in
+    select cs.id, cs.school_id, cs.max_score, s.code as subject_code
+    from public.class_subjects cs
+    join public.classes c on c.id = cs.class_id
+    join public.subjects s on s.id = cs.subject_id
+    where c.school_id = v_lycee and c.code = '2A'
+  loop
+    for v_i in 1..2 loop
+      insert into public.assessments (school_id, class_subject_id, term_id, assessment_type_id,
+                                      title, date, max_score, weight, is_published)
+      values (v_lycee, v_cs.id, v_term,
+              case when v_i = 1 then v_type_cc else v_type_ds end,
+              case when v_i = 1 then 'Controle continu n°1' else 'Devoir surveille n°1' end,
+              case when v_i = 1 then date '2025-09-22' else date '2025-10-13' end,
+              v_cs.max_score,
+              case when v_i = 1 then 1 else 2 end,
+              true)
+      returning id into v_assess;
+
+      for v_stu in
+        select e.student_id, row_number() over (order by e.student_id) as n
+        from public.enrollments e
+        join public.classes c on c.id = e.class_id
+        where c.code = '2A' and e.status = 'active'
+      loop
+        -- Notes pseudo-aleatoires mais deterministes : le seed reste reproductible.
+        v_score := round((8 + ((v_stu.n * 7 + v_i * 3 + length(v_cs.subject_code)) % 11))::numeric, 2);
+        insert into public.grades (school_id, assessment_id, student_id, score)
+        values (v_lycee, v_assess, v_stu.student_id, least(v_score, v_cs.max_score));
+      end loop;
+    end loop;
+  end loop;
+
+  perform public.compute_term_results(
+    (select id from public.classes where school_id = v_lycee and code = '2A'), v_term);
+
+  -- ---------------------------------------------------------------------------
+  -- Faculte : L1 Informatique, deux UE, trois etudiants
+  -- ---------------------------------------------------------------------------
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_dean, 'role', 'authenticated')::text, true);
+
+  select id into v_univ from public.schools where slug = 'universite-kasia';
+  select id into v_year_u from public.academic_years where school_id = v_univ and is_current;
+  select id into v_term_u from public.terms where school_id = v_univ and sequence = 1;
+
+  insert into public.levels (school_id, name, code, cycle, order_index)
+  values (v_univ, 'Licence 1', 'L1', 'higher', 1) returning id into v_level_u;
+
+  insert into public.classes (school_id, academic_year_id, level_id, name, code, capacity)
+  values (v_univ, v_year_u, v_level_u, 'L1 Informatique', 'L1-INFO', 60)
+  returning id into v_class_u;
+
+  insert into public.study_units (school_id, academic_year_id, term_id, level_id, code, name, credits, kind)
+  values (v_univ, v_year_u, v_term_u, v_level_u, 'UE-ALGO', 'Algorithmique et programmation', 9, 'fundamental')
+  returning id into v_ue1;
+
+  insert into public.study_units (school_id, academic_year_id, term_id, level_id, code, name, credits, kind)
+  values (v_univ, v_year_u, v_term_u, v_level_u, 'UE-MATH', 'Mathematiques discretes', 6, 'fundamental')
+  returning id into v_ue2;
+
+  for v_stu in
+    select * from (values
+      ('Algorithmique',  'ALGO', 'UE-ALGO'),
+      ('Programmation C','PROG', 'UE-ALGO'),
+      ('Logique',        'LOG',  'UE-MATH'),
+      ('Algebre',        'ALG',  'UE-MATH')
+    ) as t(name, code, ue)
+  loop
+    insert into public.subjects (school_id, name, code, category)
+    values (v_univ, v_stu.name, v_stu.code, 'Informatique') returning id into v_subj;
+
+    insert into public.class_subjects (school_id, class_id, subject_id, coefficient, credits, max_score)
+    values (v_univ, v_class_u, v_subj, 1, case when v_stu.ue = 'UE-ALGO' then 4.5 else 3 end, 20)
+    returning id into v_cs_u;
+
+    insert into public.study_unit_subjects (school_id, study_unit_id, class_subject_id, weight)
+    values (v_univ, case when v_stu.ue = 'UE-ALGO' then v_ue1 else v_ue2 end, v_cs_u, 1);
+  end loop;
+
+  -- Trois profils : bon partout, compensation attendue, echec net.
+  for v_i in 1..3 loop
+    insert into public.students (school_id, first_name, last_name, birth_date, gender, entry_date)
+    values (v_univ,
+            (array['Ando','Faniry','Tsiory'])[v_i],
+            (array['Rakotomalala','Ranaivo','Razafy'])[v_i],
+            date '2006-01-01' + v_i, 'other', '2025-10-01')
+    returning id into v_stu_u;
+
+    insert into public.enrollments (school_id, student_id, class_id, academic_year_id)
+    values (v_univ, v_stu_u, v_class_u, v_year_u);
+
+    for v_cs in
+      select cs.id, sus.study_unit_id
+      from public.class_subjects cs
+      join public.study_unit_subjects sus on sus.class_subject_id = cs.id
+      where cs.class_id = v_class_u
+    loop
+      insert into public.assessments (school_id, class_subject_id, term_id, title, date,
+                                      max_score, weight, is_published)
+      values (v_univ, v_cs.id, v_term_u, 'Examen semestriel', '2026-01-20', 20, 1, true)
+      returning id into v_assess;
+
+      v_score := case
+        when v_i = 1 then 15                                            -- valide tout
+        when v_i = 2 then case when v_cs.study_unit_id = v_ue1 then 13 else 8.5 end
+        else 6                                                          -- echec net
+      end;
+
+      insert into public.grades (school_id, assessment_id, student_id, score)
+      values (v_univ, v_assess, v_stu_u, v_score);
+    end loop;
+  end loop;
+
+  perform public.compute_term_results(v_class_u, v_term_u);
+
+  raise notice 'Seed module 4 : % notes, % bulletins.',
+    (select count(*) from public.grades),
+    (select count(*) from public.term_results);
+end
+$$;
