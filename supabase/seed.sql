@@ -137,3 +137,160 @@ begin
   raise notice 'Seed applique : % (/20) et % (ECTS).', v_lycee, v_univ;
 end
 $$;
+
+-- =============================================================================
+-- Module 2 — structure academique, eleves et inscriptions (Lycee Victor Hugo)
+-- =============================================================================
+do $$
+declare
+  v_lycee    uuid;
+  v_year     uuid;
+  v_seconde  uuid;
+  v_premiere uuid;
+  v_serie_s  uuid;
+  v_prof_math uuid;
+  v_prof_lettres uuid;
+  v_salle_a  uuid;
+  v_classe_2a uuid;
+  v_classe_1s uuid;
+  v_subject  record;
+  v_student  record;
+  v_student_id uuid;
+  v_guardian uuid;
+  v_i        integer;
+begin
+  -- next_number(), apply_subject_template() et enroll_students() verifient les
+  -- droits de l'appelant via auth.uid(). Le seed s'execute sans session : on
+  -- endosse l'identite de l'administrateur du lycee pour les traverser.
+  perform set_config(
+    'request.jwt.claims',
+    json_build_object(
+      'sub',  '10000000-0000-4000-a000-000000000001',
+      'role', 'authenticated'
+    )::text,
+    true
+  );
+
+  select id into v_lycee from public.schools where slug = 'lycee-victor-hugo';
+  select id into v_year  from public.academic_years where school_id = v_lycee and is_current;
+  select id into v_prof_math from public.teachers where school_id = v_lycee and employee_no = 'ENS-001';
+  select id into v_prof_lettres from public.teachers where school_id = v_lycee and employee_no = 'ENS-002';
+
+  -- Niveaux
+  insert into public.levels (school_id, name, code, cycle, order_index) values
+    (v_lycee, 'Seconde',   '2NDE', 'high', 1),
+    (v_lycee, 'Premiere',  '1ERE', 'high', 2),
+    (v_lycee, 'Terminale', 'TLE',  'high', 3);
+
+  select id into v_seconde  from public.levels where school_id = v_lycee and code = '2NDE';
+  select id into v_premiere from public.levels where school_id = v_lycee and code = '1ERE';
+
+  -- Filiere
+  insert into public.programs (school_id, name, code, level_id)
+  values (v_lycee, 'Serie Scientifique', 'S', v_premiere)
+  returning id into v_serie_s;
+
+  -- Salles
+  insert into public.rooms (school_id, name, code, building, capacity, type) values
+    (v_lycee, 'Salle A1', 'A1', 'Batiment A', 35, 'classroom'),
+    (v_lycee, 'Salle A2', 'A2', 'Batiment A', 35, 'classroom'),
+    (v_lycee, 'Labo Sciences', 'LAB1', 'Batiment B', 24, 'lab');
+
+  select id into v_salle_a from public.rooms where school_id = v_lycee and code = 'A1';
+
+  -- Matieres
+  insert into public.subjects (school_id, name, code, category) values
+    (v_lycee, 'Mathematiques',      'MATH', 'Sciences'),
+    (v_lycee, 'Francais',           'FR',   'Lettres'),
+    (v_lycee, 'Physique-Chimie',    'PC',   'Sciences'),
+    (v_lycee, 'Histoire-Geographie','HG',   'Sciences humaines'),
+    (v_lycee, 'Anglais',            'ANG',  'Langues'),
+    (v_lycee, 'SVT',                'SVT',  'Sciences'),
+    (v_lycee, 'EPS',                'EPS',  'Sport');
+
+  -- Modele de coefficients par niveau
+  for v_subject in select id, code from public.subjects where school_id = v_lycee loop
+    insert into public.subject_levels (school_id, subject_id, level_id, default_coefficient, default_weekly_hours)
+    values (
+      v_lycee, v_subject.id, v_seconde,
+      case v_subject.code when 'MATH' then 5 when 'FR' then 4 when 'PC' then 4
+                          when 'HG' then 3 when 'ANG' then 3 when 'SVT' then 3 else 1 end,
+      case v_subject.code when 'MATH' then 5 when 'FR' then 4 else 2 end
+    );
+
+    insert into public.subject_levels (school_id, subject_id, level_id, default_coefficient, default_weekly_hours)
+    values (
+      v_lycee, v_subject.id, v_premiere,
+      case v_subject.code when 'MATH' then 7 when 'PC' then 6 when 'SVT' then 5
+                          when 'FR' then 3 when 'HG' then 2 when 'ANG' then 2 else 1 end,
+      case v_subject.code when 'MATH' then 6 when 'PC' then 5 else 2 end
+    );
+  end loop;
+
+  -- Classes
+  insert into public.classes (school_id, academic_year_id, level_id, name, code, capacity, main_teacher_id, default_room_id)
+  values (v_lycee, v_year, v_seconde, 'Seconde A', '2A', 32, v_prof_lettres, v_salle_a)
+  returning id into v_classe_2a;
+
+  insert into public.classes (school_id, academic_year_id, level_id, program_id, name, code, capacity, main_teacher_id)
+  values (v_lycee, v_year, v_premiere, v_serie_s, 'Premiere S', '1S', 30, v_prof_math)
+  returning id into v_classe_1s;
+
+  -- Matieres des classes, depuis le modele de niveau
+  perform public.apply_subject_template(v_classe_2a);
+  perform public.apply_subject_template(v_classe_1s);
+
+  -- Affectation des enseignants
+  update public.class_subjects cs set teacher_id = v_prof_math
+  from public.subjects s where s.id = cs.subject_id and s.code = 'MATH' and cs.school_id = v_lycee;
+
+  update public.class_subjects cs set teacher_id = v_prof_lettres
+  from public.subjects s where s.id = cs.subject_id and s.code = 'FR' and cs.school_id = v_lycee;
+
+  -- Tuteur rattache au compte parent@lycee.test
+  insert into public.guardians (school_id, profile_id, first_name, last_name, email, phone, profession)
+  values (v_lycee, '10000000-0000-4000-a000-000000000004', 'Jean', 'Dupont',
+          'parent@lycee.test', '+261 33 11 22 33', 'Ingenieur')
+  returning id into v_guardian;
+
+  -- Eleves : Lucas est rattache au compte eleve@lycee.test et au tuteur ci-dessus
+  for v_student in
+    select * from (values
+      (1,  'Lucas',   'Dupont',    '2009-04-12', 'male',   true),
+      (2,  'Emma',    'Rasoa',     '2009-07-03', 'female', false),
+      (3,  'Noah',    'Randriana', '2009-01-25', 'male',   false),
+      (4,  'Mia',     'Rakoto',    '2009-11-08', 'female', false),
+      (5,  'Tiana',   'Ravelo',    '2008-03-17', 'female', false),
+      (6,  'Sacha',   'Andrian',   '2008-09-30', 'male',   false),
+      (7,  'Lina',    'Razaka',    '2008-06-21', 'female', false),
+      (8,  'Ravo',    'Rabary',    '2008-12-02', 'male',   false)
+    ) as t(n, first_name, last_name, birth_date, gender, is_lucas)
+  loop
+    insert into public.students (
+      school_id, profile_id, first_name, last_name, birth_date, gender,
+      city, entry_date, status
+    )
+    values (
+      v_lycee,
+      case when v_student.is_lucas then '10000000-0000-4000-a000-000000000005'::uuid else null end,
+      v_student.first_name, v_student.last_name, v_student.birth_date::date, v_student.gender,
+      'Antananarivo', '2025-09-01', 'enrolled'
+    )
+    returning id into v_student_id;
+
+    if v_student.is_lucas then
+      insert into public.student_guardians (school_id, student_id, guardian_id, relationship, is_primary)
+      values (v_lycee, v_student_id, v_guardian, 'father', true);
+    end if;
+
+    -- 4 eleves en Seconde A, 4 en Premiere S
+    insert into public.enrollments (school_id, student_id, class_id, academic_year_id)
+    values (v_lycee, v_student_id,
+            case when v_student.n <= 4 then v_classe_2a else v_classe_1s end,
+            v_year);
+  end loop;
+
+  select count(*) into v_i from public.students where school_id = v_lycee;
+  raise notice 'Seed module 2 : % eleves, 2 classes, 7 matieres.', v_i;
+end
+$$;

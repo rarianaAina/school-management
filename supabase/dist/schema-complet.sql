@@ -1065,3 +1065,1094 @@ $$;
 
 grant execute on function public.find_user_id_by_email(uuid, text) to authenticated;
 
+-- >>> 0009_academic_structure.sql
+-- =============================================================================
+-- 0009 — Structure academique : niveaux, filieres, matieres, salles, classes
+--
+-- class_subjects est le pivot du domaine : coefficient, credits, bareme,
+-- enseignant et volume horaire y sont reunis. Les evaluations (module Notes) et
+-- les creneaux (module Emploi du temps) s'y rattachent tous les deux.
+-- =============================================================================
+
+create type public.school_cycle as enum (
+  'preschool', 'primary', 'middle', 'high', 'higher'
+);
+
+create type public.room_type as enum (
+  'classroom', 'lab', 'amphitheater', 'workshop', 'gym', 'library', 'other'
+);
+
+-- -----------------------------------------------------------------------------
+-- levels — 6eme, Terminale, L1, M2...
+-- -----------------------------------------------------------------------------
+create table public.levels (
+  id           uuid primary key default gen_random_uuid(),
+  school_id    uuid not null references public.schools(id) on delete cascade,
+  name         text not null,
+  code         text,
+  cycle        public.school_cycle not null default 'high',
+  order_index  smallint not null default 0,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now(),
+
+  constraint levels_unique_name unique (school_id, name)
+);
+
+create index levels_school_idx on public.levels (school_id, order_index);
+select private.attach_updated_at('public.levels');
+
+-- -----------------------------------------------------------------------------
+-- programs — filieres, series, departements (Serie S, Genie Logiciel...)
+-- -----------------------------------------------------------------------------
+create table public.programs (
+  id              uuid primary key default gen_random_uuid(),
+  school_id       uuid not null references public.schools(id) on delete cascade,
+  name            text not null,
+  code            text,
+  level_id        uuid references public.levels(id) on delete set null,
+  head_teacher_id uuid references public.teachers(id) on delete set null,
+  description     text,
+  is_active       boolean not null default true,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+
+  constraint programs_unique_name unique (school_id, name)
+);
+
+create index programs_school_idx on public.programs (school_id) where is_active;
+select private.attach_updated_at('public.programs');
+
+-- -----------------------------------------------------------------------------
+-- subjects — matieres
+-- -----------------------------------------------------------------------------
+create table public.subjects (
+  id          uuid primary key default gen_random_uuid(),
+  school_id   uuid not null references public.schools(id) on delete cascade,
+  name        text not null,
+  code        text,
+  category    text,
+  color       text,
+  is_active   boolean not null default true,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+
+  constraint subjects_unique_name unique (school_id, name)
+);
+
+create index subjects_school_idx on public.subjects (school_id) where is_active;
+select private.attach_updated_at('public.subjects');
+
+-- -----------------------------------------------------------------------------
+-- subject_levels — modele de coefficients par niveau, repris a la creation
+-- d'une classe. Evite de resaisir "Maths coef 7 en Terminale S" chaque annee.
+-- -----------------------------------------------------------------------------
+create table public.subject_levels (
+  school_id             uuid not null references public.schools(id) on delete cascade,
+  subject_id            uuid not null references public.subjects(id) on delete cascade,
+  level_id              uuid not null references public.levels(id) on delete cascade,
+  default_coefficient   numeric(4,2) not null default 1,
+  default_credits       numeric(4,1),
+  default_max_score     numeric(5,2) not null default 20,
+  default_weekly_hours  numeric(4,1),
+  created_at            timestamptz not null default now(),
+  updated_at            timestamptz not null default now(),
+
+  primary key (subject_id, level_id),
+  constraint subject_levels_coefficient_positive check (default_coefficient > 0),
+  constraint subject_levels_max_score_positive check (default_max_score > 0)
+);
+
+create index subject_levels_school_idx on public.subject_levels (school_id);
+select private.attach_updated_at('public.subject_levels');
+
+-- -----------------------------------------------------------------------------
+-- rooms — salles. capacity sert a la repartition des examens.
+-- -----------------------------------------------------------------------------
+create table public.rooms (
+  id          uuid primary key default gen_random_uuid(),
+  school_id   uuid not null references public.schools(id) on delete cascade,
+  name        text not null,
+  code        text,
+  building    text,
+  floor       text,
+  capacity    smallint,
+  type        public.room_type not null default 'classroom',
+  is_active   boolean not null default true,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+
+  constraint rooms_unique_name unique (school_id, name),
+  constraint rooms_capacity_positive check (capacity is null or capacity > 0)
+);
+
+create index rooms_school_idx on public.rooms (school_id) where is_active;
+select private.attach_updated_at('public.rooms');
+
+-- -----------------------------------------------------------------------------
+-- classes — un groupe d'eleves, pour une annee scolaire donnee
+-- -----------------------------------------------------------------------------
+create table public.classes (
+  id                uuid primary key default gen_random_uuid(),
+  school_id         uuid not null references public.schools(id) on delete cascade,
+  academic_year_id  uuid not null references public.academic_years(id) on delete cascade,
+  level_id          uuid not null references public.levels(id) on delete restrict,
+  program_id        uuid references public.programs(id) on delete set null,
+  name              text not null,
+  code              text,
+  capacity          smallint,
+  main_teacher_id   uuid references public.teachers(id) on delete set null,
+  default_room_id   uuid references public.rooms(id) on delete set null,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now(),
+
+  constraint classes_unique_name unique (school_id, academic_year_id, name),
+  constraint classes_capacity_positive check (capacity is null or capacity > 0)
+);
+
+create index classes_year_idx on public.classes (school_id, academic_year_id);
+create index classes_level_idx on public.classes (level_id);
+create index classes_main_teacher_idx on public.classes (main_teacher_id)
+  where main_teacher_id is not null;
+
+select private.attach_updated_at('public.classes');
+
+-- -----------------------------------------------------------------------------
+-- class_subjects — pivot : matiere enseignee dans une classe
+-- -----------------------------------------------------------------------------
+create table public.class_subjects (
+  id            uuid primary key default gen_random_uuid(),
+  school_id     uuid not null references public.schools(id) on delete cascade,
+  class_id      uuid not null references public.classes(id) on delete cascade,
+  subject_id    uuid not null references public.subjects(id) on delete restrict,
+  teacher_id    uuid references public.teachers(id) on delete set null,
+  coefficient   numeric(4,2) not null default 1,
+  credits       numeric(4,1),          -- mode ECTS uniquement
+  max_score     numeric(5,2) not null default 20,
+  weekly_hours  numeric(4,1),
+  is_optional   boolean not null default false,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+
+  constraint class_subjects_unique unique (class_id, subject_id),
+  constraint class_subjects_coefficient_positive check (coefficient > 0),
+  constraint class_subjects_max_score_positive check (max_score > 0),
+  constraint class_subjects_credits_positive check (credits is null or credits > 0)
+);
+
+create index class_subjects_class_idx on public.class_subjects (class_id);
+create index class_subjects_teacher_idx on public.class_subjects (teacher_id)
+  where teacher_id is not null;
+
+select private.attach_updated_at('public.class_subjects');
+
+comment on table public.class_subjects is
+  'Pivot academique : porte le coefficient, les credits, le bareme, l''enseignant et le volume horaire.';
+
+-- -----------------------------------------------------------------------------
+-- Coherence multi-tenant : une classe ne peut pas referencer le niveau, la
+-- filiere ou la salle d'un autre etablissement. Les cles etrangeres seules ne
+-- l'empechent pas.
+-- -----------------------------------------------------------------------------
+create or replace function public.check_same_school()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_column text;
+  v_table  text;
+  v_id     uuid;
+  v_school uuid;
+  v_pairs  text[] := tg_argv;
+  i        integer;
+begin
+  -- Arguments par paires : nom de colonne, table referencee.
+  -- TG_ARGV est indexe a partir de 0 : parcourir par les bornes reelles du
+  -- tableau, jamais en supposant 1.
+  for i in array_lower(v_pairs, 1) .. array_upper(v_pairs, 1) by 2 loop
+    v_column := v_pairs[i];
+    v_table  := v_pairs[i + 1];
+
+    execute format('select ($1).%I', v_column) into v_id using new;
+    continue when v_id is null;
+
+    execute format('select school_id from public.%I where id = $1', v_table)
+      into v_school using v_id;
+
+    if v_school is distinct from new.school_id then
+      raise exception
+        'Incoherence multi-etablissement : %.% renvoie vers un enregistrement d''un autre etablissement.',
+        tg_table_name, v_column
+        using errcode = '23514';
+    end if;
+  end loop;
+
+  return new;
+end;
+$$;
+
+create trigger classes_same_school
+  before insert or update on public.classes
+  for each row execute function public.check_same_school(
+    'academic_year_id', 'academic_years',
+    'level_id', 'levels',
+    'program_id', 'programs',
+    'main_teacher_id', 'teachers',
+    'default_room_id', 'rooms'
+  );
+
+create trigger class_subjects_same_school
+  before insert or update on public.class_subjects
+  for each row execute function public.check_same_school(
+    'class_id', 'classes',
+    'subject_id', 'subjects',
+    'teacher_id', 'teachers'
+  );
+
+create trigger programs_same_school
+  before insert or update on public.programs
+  for each row execute function public.check_same_school(
+    'level_id', 'levels',
+    'head_teacher_id', 'teachers'
+  );
+
+-- -----------------------------------------------------------------------------
+-- Classes enseignees par l'utilisateur courant (professeur principal ou
+-- intervenant). Utilise par les policies des modules Notes et Presences.
+-- -----------------------------------------------------------------------------
+create or replace function private.my_taught_class_ids()
+returns uuid[]
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(array_agg(distinct c.id), array[]::uuid[])
+  from public.classes c
+  left join public.class_subjects cs on cs.class_id = c.id
+  join public.teachers t
+    on t.id = c.main_teacher_id or t.id = cs.teacher_id
+  where t.profile_id = (select auth.uid())
+    and t.deleted_at is null
+$$;
+
+grant execute on function private.my_taught_class_ids() to authenticated;
+
+-- =============================================================================
+-- RLS : lecture par tout membre (les eleves consultent leurs matieres et
+-- leur classe), ecriture reservee a l'administration.
+-- =============================================================================
+do $$
+declare
+  v_table text;
+begin
+  foreach v_table in array array[
+    'levels', 'programs', 'subjects', 'subject_levels', 'rooms', 'classes', 'class_subjects'
+  ]
+  loop
+    execute format('alter table public.%I enable row level security', v_table);
+
+    execute format(
+      'create policy %I on public.%I for select to authenticated
+         using (private.is_school_member(school_id))',
+      v_table || '_select', v_table
+    );
+
+    execute format(
+      'create policy %I on public.%I for all to authenticated
+         using (private.is_school_admin(school_id))
+         with check (private.is_school_admin(school_id))',
+      v_table || '_write', v_table
+    );
+
+    execute format('select private.grant_crud(''public.%I'')', v_table);
+  end loop;
+end
+$$;
+
+-- L'enseignant ajuste le bareme et le volume horaire de ses propres matieres,
+-- sans pouvoir changer le coefficient (qui releve de l'administration).
+create policy class_subjects_update_own on public.class_subjects
+  for update to authenticated
+  using (
+    teacher_id in (
+      select t.id from public.teachers t
+      where t.profile_id = (select auth.uid()) and t.deleted_at is null
+    )
+  )
+  with check (
+    teacher_id in (
+      select t.id from public.teachers t
+      where t.profile_id = (select auth.uid()) and t.deleted_at is null
+    )
+  );
+
+create or replace function public.guard_class_subject_coefficient()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if (new.coefficient is distinct from old.coefficient
+      or new.credits is distinct from old.credits)
+     and not private.is_school_admin(new.school_id) then
+    raise exception 'Seule l''administration peut modifier un coefficient ou des credits.'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger class_subjects_guard_coefficient
+  before update on public.class_subjects
+  for each row execute function public.guard_class_subject_coefficient();
+
+-- >>> 0010_students.sql
+-- =============================================================================
+-- 0010 — Eleves, tuteurs, inscriptions
+--
+-- L'identite civile vit sur `students`, pas sur `profiles` : un eleve de
+-- primaire n'a pas de compte. profile_id n'est renseigne que le jour ou un
+-- acces personnel lui est ouvert.
+-- =============================================================================
+
+create type public.student_status as enum (
+  'enrolled', 'graduated', 'transferred', 'withdrawn', 'suspended'
+);
+
+create type public.enrollment_status as enum (
+  'active', 'transferred', 'withdrawn', 'repeating', 'completed'
+);
+
+create type public.guardian_relationship as enum (
+  'father', 'mother', 'stepparent', 'grandparent', 'sibling', 'tutor', 'other'
+);
+
+-- -----------------------------------------------------------------------------
+-- students
+-- -----------------------------------------------------------------------------
+create table public.students (
+  id             uuid primary key default gen_random_uuid(),
+  school_id      uuid not null references public.schools(id) on delete cascade,
+  profile_id     uuid references public.profiles(id) on delete set null,
+  matricule      text not null,
+  first_name     text not null,
+  last_name      text not null,
+  full_name      text generated always as (first_name || ' ' || last_name) stored,
+  birth_date     date,
+  birth_place    text,
+  gender         text,
+  nationality    text,
+  photo_url      text,
+  email          text,
+  phone          text,
+  address        text,
+  city           text,
+  blood_group    text,
+  medical_notes  text,
+  previous_school text,
+  entry_date     date,
+  exit_date      date,
+  status         public.student_status not null default 'enrolled',
+  notes          text,
+  deleted_at     timestamptz,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+
+  constraint students_matricule_unique unique (school_id, matricule),
+  constraint students_gender_values check (gender is null or gender in ('male', 'female', 'other')),
+  constraint students_exit_after_entry check (exit_date is null or entry_date is null or exit_date >= entry_date)
+);
+
+create index students_school_idx on public.students (school_id) where deleted_at is null;
+create index students_name_idx on public.students (school_id, lower(full_name));
+create index students_matricule_idx on public.students (school_id, matricule);
+create index students_profile_idx on public.students (profile_id) where profile_id is not null;
+create index students_status_idx on public.students (school_id, status) where deleted_at is null;
+
+select private.attach_updated_at('public.students');
+
+-- Matricule attribue automatiquement : PREFIX-ANNEE-0001, sans trou ni collision.
+create or replace function public.assign_matricule()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.matricule is null or length(trim(new.matricule)) = 0 then
+    new.matricule := public.next_number(new.school_id, 'matricule');
+  end if;
+  return new;
+end;
+$$;
+
+create trigger students_assign_matricule
+  before insert on public.students
+  for each row execute function public.assign_matricule();
+
+-- -----------------------------------------------------------------------------
+-- guardians — parents et tuteurs legaux
+-- -----------------------------------------------------------------------------
+create table public.guardians (
+  id           uuid primary key default gen_random_uuid(),
+  school_id    uuid not null references public.schools(id) on delete cascade,
+  profile_id   uuid references public.profiles(id) on delete set null,
+  first_name   text not null,
+  last_name    text not null,
+  full_name    text generated always as (first_name || ' ' || last_name) stored,
+  email        text,
+  phone        text,
+  address      text,
+  city         text,
+  profession   text,
+  national_id  text,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+create index guardians_school_idx on public.guardians (school_id);
+create index guardians_name_idx on public.guardians (school_id, lower(full_name));
+create index guardians_profile_idx on public.guardians (profile_id) where profile_id is not null;
+
+select private.attach_updated_at('public.guardians');
+
+-- -----------------------------------------------------------------------------
+-- student_guardians — lien N..N, avec les droits de chaque tuteur
+-- -----------------------------------------------------------------------------
+create table public.student_guardians (
+  school_id          uuid not null references public.schools(id) on delete cascade,
+  student_id         uuid not null references public.students(id) on delete cascade,
+  guardian_id        uuid not null references public.guardians(id) on delete cascade,
+  relationship       public.guardian_relationship not null default 'other',
+  is_primary         boolean not null default false,
+  is_legal_guardian  boolean not null default true,
+  receives_invoices  boolean not null default true,
+  can_pick_up        boolean not null default true,
+  created_at         timestamptz not null default now(),
+
+  primary key (student_id, guardian_id)
+);
+
+create index student_guardians_guardian_idx on public.student_guardians (guardian_id);
+create index student_guardians_school_idx on public.student_guardians (school_id);
+
+-- Un seul contact principal par eleve : c'est lui qui recoit les convocations.
+create unique index student_guardians_one_primary
+  on public.student_guardians (student_id)
+  where is_primary;
+
+-- -----------------------------------------------------------------------------
+-- enrollments — inscription d'un eleve dans une classe, pour une annee.
+-- La table constitue l'historique scolaire.
+-- -----------------------------------------------------------------------------
+create table public.enrollments (
+  id                 uuid primary key default gen_random_uuid(),
+  school_id          uuid not null references public.schools(id) on delete cascade,
+  student_id         uuid not null references public.students(id) on delete cascade,
+  class_id           uuid not null references public.classes(id) on delete cascade,
+  academic_year_id   uuid not null references public.academic_years(id) on delete cascade,
+  status             public.enrollment_status not null default 'active',
+  is_repeating       boolean not null default false,
+  enrolled_at        date not null default current_date,
+  withdrawn_at       date,
+  withdrawal_reason  text,
+  created_at         timestamptz not null default now(),
+  updated_at         timestamptz not null default now(),
+
+  constraint enrollments_unique_per_class unique (student_id, class_id)
+);
+
+-- Un eleve n'a qu'une inscription active par annee scolaire.
+create unique index enrollments_one_active_per_year
+  on public.enrollments (student_id, academic_year_id)
+  where status = 'active';
+
+create index enrollments_class_idx on public.enrollments (class_id) where status = 'active';
+create index enrollments_student_idx on public.enrollments (student_id);
+create index enrollments_year_idx on public.enrollments (school_id, academic_year_id);
+
+select private.attach_updated_at('public.enrollments');
+
+create trigger enrollments_same_school
+  before insert or update on public.enrollments
+  for each row execute function public.check_same_school(
+    'student_id', 'students',
+    'class_id', 'classes',
+    'academic_year_id', 'academic_years'
+  );
+
+create trigger student_guardians_same_school
+  before insert or update on public.student_guardians
+  for each row execute function public.check_same_school(
+    'student_id', 'students',
+    'guardian_id', 'guardians'
+  );
+
+-- L'annee de l'inscription doit etre celle de la classe : sinon un eleve
+-- pourrait etre rattache a une classe de l'annee precedente.
+create or replace function public.check_enrollment_year()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_year uuid;
+begin
+  select academic_year_id into v_year from public.classes where id = new.class_id;
+
+  if v_year is distinct from new.academic_year_id then
+    raise exception 'La classe choisie appartient a une autre annee scolaire.'
+      using errcode = '23514';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger enrollments_check_year
+  before insert or update on public.enrollments
+  for each row execute function public.check_enrollment_year();
+
+-- -----------------------------------------------------------------------------
+-- student_documents — pieces justificatives (Supabase Storage)
+-- -----------------------------------------------------------------------------
+create table public.student_documents (
+  id            uuid primary key default gen_random_uuid(),
+  school_id     uuid not null references public.schools(id) on delete cascade,
+  student_id    uuid not null references public.students(id) on delete cascade,
+  type          text not null default 'other',
+  label         text not null,
+  storage_path  text not null,
+  mime_type     text,
+  size_bytes    bigint,
+  uploaded_by   uuid references public.profiles(id) on delete set null,
+  created_at    timestamptz not null default now()
+);
+
+create index student_documents_student_idx on public.student_documents (student_id);
+
+-- =============================================================================
+-- Fonctions d'aide RLS specifiques aux eleves
+-- =============================================================================
+
+-- Eleves rattaches a l'utilisateur : lui-meme, ou ses enfants via un tuteur.
+create or replace function private.my_student_ids()
+returns uuid[]
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(array_agg(distinct s.id), array[]::uuid[])
+  from public.students s
+  left join public.student_guardians sg on sg.student_id = s.id
+  left join public.guardians g on g.id = sg.guardian_id
+  where s.deleted_at is null
+    and (
+      s.profile_id = (select auth.uid())
+      or g.profile_id = (select auth.uid())
+    )
+$$;
+
+-- Eleves des classes ou l'utilisateur enseigne.
+create or replace function private.taught_student_ids()
+returns uuid[]
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(array_agg(distinct e.student_id), array[]::uuid[])
+  from public.enrollments e
+  where e.status = 'active'
+    and e.class_id = any (private.my_taught_class_ids())
+$$;
+
+-- Tuteurs visibles : les siens, et ceux des eleves du perimetre.
+create or replace function private.visible_guardian_ids()
+returns uuid[]
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(array_agg(distinct g.id), array[]::uuid[])
+  from public.guardians g
+  left join public.student_guardians sg on sg.guardian_id = g.id
+  where g.profile_id = (select auth.uid())
+     or sg.student_id = any (private.my_student_ids())
+     or sg.student_id = any (private.taught_student_ids())
+$$;
+
+grant execute on function
+  private.my_student_ids(),
+  private.taught_student_ids(),
+  private.visible_guardian_ids()
+to authenticated;
+
+-- =============================================================================
+-- RLS
+-- =============================================================================
+
+-- students ---------------------------------------------------------------
+alter table public.students enable row level security;
+
+create policy students_select on public.students
+  for select to authenticated
+  using (
+    private.is_school_staff(school_id)          -- administration + comptabilite
+    or id = any (private.my_student_ids())      -- soi-meme, ou son enfant
+    or id = any (private.taught_student_ids())  -- ses eleves
+  );
+
+create policy students_write on public.students
+  for all to authenticated
+  using (private.is_school_admin(school_id))
+  with check (private.is_school_admin(school_id));
+
+select private.grant_crud('public.students');
+
+-- guardians --------------------------------------------------------------
+alter table public.guardians enable row level security;
+
+create policy guardians_select on public.guardians
+  for select to authenticated
+  using (
+    private.is_school_staff(school_id)
+    or id = any (private.visible_guardian_ids())
+  );
+
+create policy guardians_write on public.guardians
+  for all to authenticated
+  using (private.is_school_admin(school_id))
+  with check (private.is_school_admin(school_id));
+
+-- Le tuteur tient ses propres coordonnees a jour.
+create policy guardians_update_self on public.guardians
+  for update to authenticated
+  using (profile_id = (select auth.uid()))
+  with check (profile_id = (select auth.uid()));
+
+select private.grant_crud('public.guardians');
+
+-- student_guardians ------------------------------------------------------
+alter table public.student_guardians enable row level security;
+
+create policy student_guardians_select on public.student_guardians
+  for select to authenticated
+  using (
+    private.is_school_staff(school_id)
+    or student_id = any (private.my_student_ids())
+    or student_id = any (private.taught_student_ids())
+  );
+
+create policy student_guardians_write on public.student_guardians
+  for all to authenticated
+  using (private.is_school_admin(school_id))
+  with check (private.is_school_admin(school_id));
+
+select private.grant_crud('public.student_guardians');
+
+-- enrollments ------------------------------------------------------------
+alter table public.enrollments enable row level security;
+
+create policy enrollments_select on public.enrollments
+  for select to authenticated
+  using (
+    private.is_school_staff(school_id)
+    or student_id = any (private.my_student_ids())
+    or class_id = any (private.my_taught_class_ids())
+  );
+
+create policy enrollments_write on public.enrollments
+  for all to authenticated
+  using (private.is_school_admin(school_id))
+  with check (private.is_school_admin(school_id));
+
+select private.grant_crud('public.enrollments');
+
+-- student_documents ------------------------------------------------------
+alter table public.student_documents enable row level security;
+
+create policy student_documents_select on public.student_documents
+  for select to authenticated
+  using (
+    private.is_school_staff(school_id)
+    or student_id = any (private.my_student_ids())
+  );
+
+create policy student_documents_write on public.student_documents
+  for all to authenticated
+  using (private.is_school_admin(school_id))
+  with check (private.is_school_admin(school_id));
+
+select private.grant_crud('public.student_documents');
+
+-- Audit des donnees sensibles
+select private.attach_audit('public.students');
+select private.attach_audit('public.enrollments');
+
+-- >>> 0011_student_views_and_imports.sql
+-- =============================================================================
+-- 0011 — Vues de consultation et imports en masse
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- student_overview — une ligne par (eleve, annee scolaire).
+--
+-- security_invoker = true : la vue herite de la RLS de `students`, si bien que
+-- chaque role y voit exactement le meme perimetre que sur la table de base.
+-- Filtrer sur academic_year_id cote client donne une ligne par eleve.
+-- -----------------------------------------------------------------------------
+create view public.student_overview
+with (security_invoker = true) as
+  select s.id,
+         s.school_id,
+         s.profile_id,
+         s.matricule,
+         s.first_name,
+         s.last_name,
+         s.full_name,
+         s.birth_date,
+         s.gender,
+         s.photo_url,
+         s.email,
+         s.phone,
+         s.city,
+         s.status,
+         s.entry_date,
+         s.created_at,
+         e.id               as enrollment_id,
+         e.status           as enrollment_status,
+         e.is_repeating,
+         e.enrolled_at,
+         e.academic_year_id,
+         c.id               as class_id,
+         c.name             as class_name,
+         l.id               as level_id,
+         l.name             as level_name,
+         p.id               as program_id,
+         p.name             as program_name
+  from public.students s
+  left join public.enrollments e
+    on e.student_id = s.id and e.status = 'active'
+  left join public.classes c on c.id = e.class_id
+  left join public.levels l on l.id = c.level_id
+  left join public.programs p on p.id = c.program_id
+  where s.deleted_at is null;
+
+grant select on public.student_overview to authenticated;
+
+comment on view public.student_overview is
+  'Eleve + inscription active + classe/niveau/filiere. Une ligne par annee scolaire ; filtrer sur academic_year_id.';
+
+-- -----------------------------------------------------------------------------
+-- class_overview — effectifs et taux de remplissage.
+--
+-- security_invoker = false ici, a l'inverse : les effectifs doivent etre exacts
+-- pour tout membre autorise a voir la classe. Sous RLS invoker, un eleve ne
+-- comptant que sa propre inscription aurait vu "1 eleve" partout.
+-- -----------------------------------------------------------------------------
+create view public.class_overview
+with (security_invoker = false) as
+  select c.id,
+         c.school_id,
+         c.academic_year_id,
+         c.name,
+         c.code,
+         c.capacity,
+         c.level_id,
+         c.program_id,
+         c.main_teacher_id,
+         c.default_room_id,
+         c.created_at,
+         l.name  as level_name,
+         l.cycle as level_cycle,
+         l.order_index as level_order,
+         p.name  as program_name,
+         t.full_name as main_teacher_name,
+         r.name  as default_room_name,
+         (select count(*) from public.enrollments e
+           where e.class_id = c.id and e.status = 'active')     as enrolled_count,
+         (select count(*) from public.class_subjects cs
+           where cs.class_id = c.id)                            as subject_count,
+         case
+           when c.capacity is null or c.capacity = 0 then null
+           else round(
+             (select count(*) from public.enrollments e
+               where e.class_id = c.id and e.status = 'active')::numeric
+             * 100 / c.capacity, 1)
+         end                                                    as fill_rate
+  from public.classes c
+  join public.levels l on l.id = c.level_id
+  left join public.programs p on p.id = c.program_id
+  left join public.teachers t on t.id = c.main_teacher_id
+  left join public.rooms r on r.id = c.default_room_id
+  where private.is_school_member(c.school_id);
+
+grant select on public.class_overview to authenticated;
+
+comment on view public.class_overview is
+  'Classes avec effectif inscrit, nombre de matieres et taux de remplissage.';
+
+-- -----------------------------------------------------------------------------
+-- import_jobs — trace des imports CSV/Excel et de leurs erreurs ligne a ligne
+-- -----------------------------------------------------------------------------
+create type public.import_status as enum ('pending', 'processing', 'completed', 'failed');
+
+create table public.import_jobs (
+  id            uuid primary key default gen_random_uuid(),
+  school_id     uuid not null references public.schools(id) on delete cascade,
+  entity        text not null,          -- 'students' | 'teachers' | 'guardians'
+  filename      text not null,
+  storage_path  text,
+  status        public.import_status not null default 'pending',
+  total_rows    integer not null default 0,
+  success_rows  integer not null default 0,
+  error_rows    integer not null default 0,
+  errors        jsonb not null default '[]'::jsonb,
+  options       jsonb not null default '{}'::jsonb,
+  created_by    uuid references public.profiles(id) on delete set null,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+
+  constraint import_jobs_entity_values check (entity in ('students', 'teachers', 'guardians'))
+);
+
+create index import_jobs_school_idx on public.import_jobs (school_id, created_at desc);
+
+select private.attach_updated_at('public.import_jobs');
+
+alter table public.import_jobs enable row level security;
+
+create policy import_jobs_select on public.import_jobs
+  for select to authenticated
+  using (private.is_school_admin(school_id));
+
+create policy import_jobs_write on public.import_jobs
+  for all to authenticated
+  using (private.is_school_admin(school_id))
+  with check (private.is_school_admin(school_id));
+
+select private.grant_crud('public.import_jobs');
+
+-- -----------------------------------------------------------------------------
+-- enroll_students — inscrit un lot d'eleves dans une classe.
+--
+-- Regroupe en une transaction la cloture de l'inscription active precedente et
+-- la creation de la nouvelle : evite l'echec de l'index partiel
+-- enrollments_one_active_per_year lors d'un changement de classe.
+-- -----------------------------------------------------------------------------
+create or replace function public.enroll_students(
+  p_class_id     uuid,
+  p_student_ids  uuid[],
+  p_is_repeating boolean default false
+)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_school uuid;
+  v_year   uuid;
+  v_count  integer := 0;
+begin
+  select school_id, academic_year_id into v_school, v_year
+  from public.classes where id = p_class_id;
+
+  if v_school is null then
+    raise exception 'Classe introuvable.' using errcode = '23503';
+  end if;
+
+  if not private.is_school_admin(v_school) then
+    raise exception 'Seule l''administration peut inscrire un eleve.' using errcode = '42501';
+  end if;
+
+  -- Cloture des inscriptions actives de la meme annee, hors classe cible.
+  update public.enrollments e
+  set status = 'transferred', withdrawn_at = current_date
+  where e.student_id = any (p_student_ids)
+    and e.academic_year_id = v_year
+    and e.status = 'active'
+    and e.class_id <> p_class_id;
+
+  insert into public.enrollments (school_id, student_id, class_id, academic_year_id, is_repeating)
+  select v_school, s.id, p_class_id, v_year, p_is_repeating
+  from public.students s
+  where s.id = any (p_student_ids)
+    and s.school_id = v_school
+    and s.deleted_at is null
+  on conflict (student_id, class_id) do update
+    set status = 'active', withdrawn_at = null, withdrawal_reason = null;
+
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+grant execute on function public.enroll_students(uuid, uuid[], boolean) to authenticated;
+
+-- -----------------------------------------------------------------------------
+-- apply_subject_template — cree les matieres d'une classe a partir du modele
+-- defini pour son niveau (subject_levels).
+-- -----------------------------------------------------------------------------
+create or replace function public.apply_subject_template(p_class_id uuid)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_school uuid;
+  v_level  uuid;
+  v_count  integer := 0;
+begin
+  select school_id, level_id into v_school, v_level
+  from public.classes where id = p_class_id;
+
+  if v_school is null then
+    raise exception 'Classe introuvable.' using errcode = '23503';
+  end if;
+
+  if not private.is_school_admin(v_school) then
+    raise exception 'Acces refuse.' using errcode = '42501';
+  end if;
+
+  insert into public.class_subjects (
+    school_id, class_id, subject_id, coefficient, credits, max_score, weekly_hours
+  )
+  select v_school, p_class_id, sl.subject_id,
+         sl.default_coefficient, sl.default_credits,
+         sl.default_max_score, sl.default_weekly_hours
+  from public.subject_levels sl
+  where sl.level_id = v_level
+    and sl.school_id = v_school
+  on conflict (class_id, subject_id) do nothing;
+
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+grant execute on function public.apply_subject_template(uuid) to authenticated;
+
+-- >>> 0012_storage.sql
+-- =============================================================================
+-- 0012 — Buckets Storage et policies
+--
+-- Convention de chemin : {school_id}/... — le premier segment porte l'isolation
+-- multi-etablissement, exactement comme la colonne school_id en base.
+-- =============================================================================
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values
+  ('avatars',        'avatars',        false, 2  * 1024 * 1024,
+   array['image/jpeg', 'image/png', 'image/webp']),
+  ('student-photos', 'student-photos', false, 2  * 1024 * 1024,
+   array['image/jpeg', 'image/png', 'image/webp']),
+  ('documents',      'documents',      false, 10 * 1024 * 1024,
+   array['image/jpeg', 'image/png', 'image/webp', 'application/pdf']),
+  ('report-cards',   'report-cards',   false, 10 * 1024 * 1024,
+   array['application/pdf']),
+  ('finance',        'finance',        false, 10 * 1024 * 1024,
+   array['application/pdf']),
+  ('imports',        'imports',        false, 20 * 1024 * 1024,
+   array['text/csv', 'application/vnd.ms-excel',
+         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])
+on conflict (id) do nothing;
+
+-- Conversion tolerante : un chemin dont le premier segment n'est pas un uuid
+-- ne doit pas faire echouer la policy, seulement la rendre fausse.
+create or replace function private.safe_uuid(p_value text)
+returns uuid
+language plpgsql
+immutable
+as $$
+begin
+  return p_value::uuid;
+exception when others then
+  return null;
+end;
+$$;
+
+grant execute on function private.safe_uuid(text) to authenticated;
+
+-- Etablissement porte par le chemin de l'objet
+create or replace function private.storage_school_id(p_name text)
+returns uuid
+language sql
+immutable
+as $$
+  select private.safe_uuid((storage.foldername(p_name))[1])
+$$;
+
+grant execute on function private.storage_school_id(text) to authenticated;
+
+-- -----------------------------------------------------------------------------
+-- Lecture : tout membre de l'etablissement proprietaire du chemin.
+-- Ecriture : administration uniquement, sauf avatars (chacun le sien).
+-- -----------------------------------------------------------------------------
+create policy storage_read_own_school on storage.objects
+  for select to authenticated
+  using (
+    bucket_id in ('avatars', 'student-photos', 'documents', 'report-cards', 'finance', 'imports')
+    and private.is_school_member(private.storage_school_id(name))
+  );
+
+create policy storage_write_admin on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id in ('student-photos', 'documents', 'report-cards', 'finance', 'imports')
+    and private.is_school_admin(private.storage_school_id(name))
+  );
+
+create policy storage_update_admin on storage.objects
+  for update to authenticated
+  using (
+    bucket_id in ('student-photos', 'documents', 'report-cards', 'finance', 'imports')
+    and private.is_school_admin(private.storage_school_id(name))
+  )
+  with check (
+    bucket_id in ('student-photos', 'documents', 'report-cards', 'finance', 'imports')
+    and private.is_school_admin(private.storage_school_id(name))
+  );
+
+create policy storage_delete_admin on storage.objects
+  for delete to authenticated
+  using (
+    bucket_id in ('student-photos', 'documents', 'report-cards', 'finance', 'imports')
+    and private.is_school_admin(private.storage_school_id(name))
+  );
+
+-- Avatars : {school_id}/{user_id}.ext — chacun gere le sien.
+create policy storage_avatar_write on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'avatars'
+    and private.is_school_member(private.storage_school_id(name))
+    and (storage.filename(name)) like ((select auth.uid())::text || '%')
+  );
+
+create policy storage_avatar_update on storage.objects
+  for update to authenticated
+  using (
+    bucket_id = 'avatars'
+    and (storage.filename(name)) like ((select auth.uid())::text || '%')
+  )
+  with check (
+    bucket_id = 'avatars'
+    and (storage.filename(name)) like ((select auth.uid())::text || '%')
+  );
+
+create policy storage_avatar_delete on storage.objects
+  for delete to authenticated
+  using (
+    bucket_id = 'avatars'
+    and (storage.filename(name)) like ((select auth.uid())::text || '%')
+  );
+

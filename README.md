@@ -123,7 +123,7 @@ L'autorisation vit **dans la base**, pas dans le frontend.
 |---|---|
 | 0 · Fondations, socle SQL, composants partagés | ✅ |
 | 1 · Auth, rôles, multi-tenant, années & périodes, membres | ✅ |
-| 2 · Élèves & classes | à venir |
+| 2 · Élèves, classes, référentiels, enseignants, import CSV | ✅ |
 | 3 · Emplois du temps | à venir |
 | 4 · Notes & bulletins | à venir |
 | 5 · Examens | à venir |
