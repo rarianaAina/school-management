@@ -113,6 +113,9 @@ L'autorisation vit **dans la base**, pas dans le frontend.
   il ne les remplace pas.
 - Numérotation (matricules, factures) via `next_number()`, atomique et sans trou.
 - `audit_logs` journalise les opérations sensibles.
+- Les conflits d'emploi du temps sont impossibles par construction : trois
+  contraintes `EXCLUDE USING gist` sur `timetable_slots` (salle, enseignant,
+  classe). Aucune vérification équivalente n'existe côté client.
 - Le rôle `anon` n'a aucun privilège sur `public` : l'accès anonyme est refusé au
   niveau des GRANT, sans dépendre de l'absence de policy.
 
@@ -139,7 +142,7 @@ L'autorisation vit **dans la base**, pas dans le frontend.
 | 0 · Fondations, socle SQL, composants partagés | ✅ |
 | 1 · Auth, rôles, multi-tenant, années & périodes, membres | ✅ |
 | 2 · Élèves, classes, référentiels, enseignants, import CSV | ✅ |
-| 3 · Emplois du temps | à venir |
+| 3 · Emplois du temps (anti-conflit, drag & drop, séances) | ✅ |
 | 4 · Notes & bulletins | à venir |
 | 5 · Examens | à venir |
 | 6 · Frais de scolarité | à venir |

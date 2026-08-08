@@ -294,3 +294,77 @@ begin
   raise notice 'Seed module 2 : % eleves, 2 classes, 7 matieres.', v_i;
 end
 $$;
+
+-- =============================================================================
+-- Module 3 — grille hebdomadaire (Lycee Victor Hugo)
+-- Grille volontairement sans conflit : memes enseignants sur deux classes,
+-- laboratoire partage, mais jamais au meme moment.
+-- =============================================================================
+do $$
+declare
+  v_lycee uuid;
+  v_2a    uuid;
+  v_1s    uuid;
+  v_row   record;
+  v_cs    uuid;
+  v_room  uuid;
+  v_n     integer;
+begin
+  perform set_config(
+    'request.jwt.claims',
+    json_build_object('sub', '10000000-0000-4000-a000-000000000001', 'role', 'authenticated')::text,
+    true
+  );
+
+  select id into v_lycee from public.schools where slug = 'lycee-victor-hugo';
+  select id into v_2a from public.classes where school_id = v_lycee and code = '2A';
+  select id into v_1s from public.classes where school_id = v_lycee and code = '1S';
+
+  for v_row in
+    select * from (values
+      -- classe, matiere, jour, debut, fin, salle
+      ('2A', 'MATH', 1, '08:00', '10:00', 'A1'),
+      ('2A', 'FR',   1, '10:00', '12:00', 'A1'),
+      ('2A', 'PC',   2, '08:00', '10:00', 'LAB1'),
+      ('2A', 'ANG',  2, '10:00', '11:00', 'A1'),
+      ('2A', 'HG',   3, '08:00', '10:00', 'A1'),
+      ('2A', 'SVT',  4, '08:00', '10:00', 'LAB1'),
+      ('2A', 'EPS',  5, '08:00', '09:00', 'A1'),
+      ('1S', 'MATH', 1, '14:00', '16:00', 'A2'),
+      ('1S', 'FR',   2, '14:00', '16:00', 'A2'),
+      ('1S', 'PC',   3, '10:00', '12:00', 'LAB1'),
+      ('1S', 'SVT',  4, '10:00', '12:00', 'LAB1'),
+      ('1S', 'HG',   5, '09:00', '11:00', 'A2')
+    ) as t(class_code, subject_code, day, starts, ends, room_code)
+  loop
+    select cs.id into v_cs
+    from public.class_subjects cs
+    join public.classes c on c.id = cs.class_id
+    join public.subjects s on s.id = cs.subject_id
+    where c.school_id = v_lycee and c.code = v_row.class_code and s.code = v_row.subject_code;
+
+    select id into v_room from public.rooms
+     where school_id = v_lycee and code = v_row.room_code;
+
+    continue when v_cs is null;
+
+    insert into public.timetable_slots (
+      school_id, academic_year_id, class_subject_id, class_id,
+      teacher_id, room_id, day_of_week, start_time, end_time
+    )
+    select v_lycee, c.academic_year_id, v_cs, cs.class_id, cs.teacher_id, v_room,
+           v_row.day, v_row.starts::time, v_row.ends::time
+    from public.class_subjects cs
+    join public.classes c on c.id = cs.class_id
+    where cs.id = v_cs;
+  end loop;
+
+  -- Seances de septembre, jours feries exclus
+  perform public.generate_lessons(v_2a, '2025-09-01', '2025-09-30');
+  perform public.generate_lessons(v_1s, '2025-09-01', '2025-09-30');
+
+  select count(*) into v_n from public.timetable_slots where school_id = v_lycee;
+  raise notice 'Seed module 3 : % creneaux, % seances generees.',
+    v_n, (select count(*) from public.lessons where school_id = v_lycee);
+end
+$$;

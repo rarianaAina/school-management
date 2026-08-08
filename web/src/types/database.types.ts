@@ -184,6 +184,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "class_subjects_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "timetable_view"
+            referencedColumns: ["subject_id"]
+          },
+          {
             foreignKeyName: "class_subjects_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
@@ -531,6 +538,168 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          cancellation_reason: string | null
+          class_id: string
+          class_subject_id: string | null
+          created_at: string
+          date: string
+          end_time: string
+          homework: string | null
+          id: string
+          room_id: string | null
+          school_id: string
+          start_time: string
+          status: Database["public"]["Enums"]["lesson_status"]
+          subject_id: string | null
+          substitute_teacher_id: string | null
+          teacher_id: string | null
+          timetable_slot_id: string | null
+          topic: string | null
+          updated_at: string
+        }
+        Insert: {
+          cancellation_reason?: string | null
+          class_id: string
+          class_subject_id?: string | null
+          created_at?: string
+          date: string
+          end_time: string
+          homework?: string | null
+          id?: string
+          room_id?: string | null
+          school_id: string
+          start_time: string
+          status?: Database["public"]["Enums"]["lesson_status"]
+          subject_id?: string | null
+          substitute_teacher_id?: string | null
+          teacher_id?: string | null
+          timetable_slot_id?: string | null
+          topic?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cancellation_reason?: string | null
+          class_id?: string
+          class_subject_id?: string | null
+          created_at?: string
+          date?: string
+          end_time?: string
+          homework?: string | null
+          id?: string
+          room_id?: string | null
+          school_id?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["lesson_status"]
+          subject_id?: string | null
+          substitute_teacher_id?: string | null
+          teacher_id?: string | null
+          timetable_slot_id?: string | null
+          topic?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "class_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["class_id"]
+          },
+          {
+            foreignKeyName: "lessons_class_subject_id_fkey"
+            columns: ["class_subject_id"]
+            isOneToOne: false
+            referencedRelation: "class_subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "timetable_view"
+            referencedColumns: ["subject_id"]
+          },
+          {
+            foreignKeyName: "lessons_substitute_teacher_id_fkey"
+            columns: ["substitute_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_substitute_teacher_id_fkey"
+            columns: ["substitute_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_timetable_slot_id_fkey"
+            columns: ["timetable_slot_id"]
+            isOneToOne: false
+            referencedRelation: "timetable_slots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_timetable_slot_id_fkey"
+            columns: ["timetable_slot_id"]
+            isOneToOne: false
+            referencedRelation: "timetable_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1257,6 +1426,13 @@ export type Database = {
             referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "subject_levels_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "timetable_view"
+            referencedColumns: ["subject_id"]
+          },
         ]
       }
       subjects: {
@@ -1446,6 +1622,115 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timetable_slots: {
+        Row: {
+          academic_year_id: string
+          class_id: string
+          class_subject_id: string
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          room_id: string | null
+          school_id: string
+          start_time: string
+          teacher_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          academic_year_id: string
+          class_id: string
+          class_subject_id: string
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          room_id?: string | null
+          school_id: string
+          start_time: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          academic_year_id?: string
+          class_id?: string
+          class_subject_id?: string
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          room_id?: string | null
+          school_id?: string
+          start_time?: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timetable_slots_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "class_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["class_id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_class_subject_id_fkey"
+            columns: ["class_subject_id"]
+            isOneToOne: false
+            referencedRelation: "class_subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
@@ -1677,6 +1962,135 @@ export type Database = {
           },
         ]
       }
+      teacher_workload: {
+        Row: {
+          academic_year_id: string | null
+          class_count: number | null
+          school_id: string | null
+          slot_count: number | null
+          teacher_id: string | null
+          weekly_hours: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timetable_slots_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timetable_view: {
+        Row: {
+          academic_year_id: string | null
+          class_id: string | null
+          class_name: string | null
+          class_subject_id: string | null
+          coefficient: number | null
+          day_of_week: number | null
+          end_time: string | null
+          id: string | null
+          level_name: string | null
+          room_id: string | null
+          room_name: string | null
+          school_id: string | null
+          start_time: string | null
+          subject_code: string | null
+          subject_color: string | null
+          subject_id: string | null
+          subject_name: string | null
+          teacher_id: string | null
+          teacher_name: string | null
+          weekly_hours: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timetable_slots_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "class_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["class_id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_class_subject_id_fkey"
+            columns: ["class_subject_id"]
+            isOneToOne: false
+            referencedRelation: "class_subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_slots_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       apply_subject_template: { Args: { p_class_id: string }; Returns: number }
@@ -1728,6 +2142,10 @@ export type Database = {
         Args: { p_email: string; p_school: string }
         Returns: string
       }
+      generate_lessons: {
+        Args: { p_class_id: string; p_from: string; p_to: string }
+        Returns: number
+      }
       next_number: {
         Args: { p_kind: string; p_school: string; p_year?: number }
         Returns: string
@@ -1751,6 +2169,7 @@ export type Database = {
         | "tutor"
         | "other"
       import_status: "pending" | "processing" | "completed" | "failed"
+      lesson_status: "planned" | "held" | "cancelled" | "replaced"
       room_type:
         | "classroom"
         | "lab"
@@ -1928,6 +2347,7 @@ export const Constants = {
         "other",
       ],
       import_status: ["pending", "processing", "completed", "failed"],
+      lesson_status: ["planned", "held", "cancelled", "replaced"],
       room_type: [
         "classroom",
         "lab",

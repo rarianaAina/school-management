@@ -73,7 +73,6 @@ export const NAVIGATION: NavGroup[] = [
         to: '/emploi-du-temps',
         icon: CalendarDays,
         permission: ['timetable:read'],
-        soon: true,
       },
     ],
   },

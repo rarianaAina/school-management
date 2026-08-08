@@ -72,6 +72,9 @@ const ReferentialsPage = lazy(() =>
     default: m.ReferentialsPage,
   })),
 )
+const TimetablePage = lazy(() =>
+  import('@/features/timetable/pages/TimetablePage').then((m) => ({ default: m.TimetablePage })),
+)
 const TeachersPage = lazy(() =>
   import('@/features/staff/pages/TeachersPage').then((m) => ({ default: m.TeachersPage })),
 )
@@ -185,6 +188,15 @@ export function AppRouter() {
                 element={
                   <RequirePermission permission="teacher:read">
                     <TeachersPage />
+                  </RequirePermission>
+                }
+              />
+
+              <Route
+                path="/emploi-du-temps"
+                element={
+                  <RequirePermission permission="timetable:read">
+                    <TimetablePage />
                   </RequirePermission>
                 }
               />

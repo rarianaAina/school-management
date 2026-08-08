@@ -214,3 +214,19 @@ export const GENDER_LABELS: Record<string, string> = {
   female: 'Féminin',
   other: 'Autre',
 }
+
+// -----------------------------------------------------------------------------
+// Module 3 — emplois du temps
+// -----------------------------------------------------------------------------
+export type LessonStatus = Enums<'lesson_status'>
+export type TimetableSlot = Tables<'timetable_slots'>
+export type TimetableEntry = Tables<'timetable_view'>
+export type Lesson = Tables<'lessons'>
+export type TeacherWorkload = Tables<'teacher_workload'>
+
+export const LESSON_STATUS_LABELS: Record<LessonStatus, string> = {
+  planned: 'Prévue',
+  held: 'Assurée',
+  cancelled: 'Annulée',
+  replaced: 'Remplacée',
+}
